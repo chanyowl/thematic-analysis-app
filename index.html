@@ -1126,6 +1126,21 @@ return \`${body}\`;
   return js;
 }
 
+// Returns the pre-rendered prompt TEXT (not JS code).
+// This is what gets sent to n8n so the Code Tool can simply return it.
+function generatePersonaPrompt() {
+  const code = generateN8nCodeTool();
+  // Execute the generated code to extract the prompt string
+  try {
+    const fn = new Function(code);
+    return fn();
+  } catch(e) {
+    // Fallback: strip the JS wrapper manually
+    const match = code.match(/return `([\s\S]*)`;/);
+    return match ? match[1] : code;
+  }
+}
+
 // ===================== EXPORT FUNCTIONS =====================
 
 let currentTab = 'code';
@@ -1277,6 +1292,7 @@ async function sendToWebhook() {
 
   const payload = {
     n8n_code_tool: generateN8nCodeTool(),
+    persona_prompt: generatePersonaPrompt(),
     config: {
       ...generatePersonaSpec(),
       inputSpreadsheetId: inputSpreadsheetId,
