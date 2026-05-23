@@ -446,6 +446,229 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+
+  /* ===================== DASHBOARD STYLING ===================== */
+  .dashboard-progress-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .progress-card, .results-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+  }
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+  }
+  .stepper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    position: relative;
+  }
+  .stepper::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: var(--border);
+    z-index: 1;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 2;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+  }
+  .step.active {
+    opacity: 1;
+  }
+  .step.completed {
+    opacity: 1;
+  }
+  .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+  }
+  .step.active .step-icon {
+    border-color: var(--accent-blue);
+    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+    color: var(--text-primary);
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent-blue) 40%, transparent);
+  }
+  .step.completed .step-icon {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10B981;
+  }
+  .step-content {
+    display: flex;
+    flex-direction: column;
+  }
+  .step-label {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .step.active .step-label {
+    color: var(--text-primary);
+  }
+  .step-status {
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .step.active .step-status {
+    color: var(--accent-blue);
+    font-weight: 500;
+  }
+  .step.completed .step-status {
+    color: #10B981;
+  }
+
+  /* Results Card and Themes */
+  .results-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .btn-refresh-sheet {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .btn-refresh-sheet:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+  .themes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .theme-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .theme-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .theme-card__header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.01);
+  }
+  .theme-card__header:hover {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .theme-title-area {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .theme-card__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .theme-card__subthemes {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .theme-card__badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+  }
+  .theme-card__body {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .theme-card__desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .subtheme-section {
+    border-left: 2px solid var(--accent-blue);
+    padding-left: 16px;
+    margin-top: 12px;
+  }
+  .subtheme-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .quotes-section {
+    margin-top: 14px;
+  }
+  .quotes-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .quote-item {
+    font-size: 12px;
+    font-style: italic;
+    color: var(--text-dim);
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+    padding-left: 12px;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .quote-item strong {
+    color: var(--text-muted);
+    font-weight: normal;
+  }
+
+  .label-desc {
+    font-weight: 300 !important;
+    opacity: 0.7;
+    margin-left: 4px;
+  }
 </style>
 </head>
 <body>
@@ -507,12 +730,89 @@
       <div class="summary-bar__title">Configuration Summary</div>
       <div class="summary-bar__detail" id="summaryDetail"></div>
     </div>
-    <button class="summary-bar__btn" id="summaryBtn" onclick="openExportModal()">Export n8n Code Tool →</button>
+    <div style="display: flex; gap: 12px;">
+      <button class="summary-bar__btn" id="dashOpenBtn" onclick="openDashboard()" style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">📊 Open Dashboard</button>
+      <button class="summary-bar__btn" id="summaryBtn" onclick="openExportModal()">Export n8n Code Tool →</button>
+    </div>
   </div>
 
   <div class="footer">
     Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
     Persona architecture designed for defensible automated thematic analysis
+  </div>
+</div>
+
+<!-- ============ DASHBOARD SCREEN ============ -->
+<div class="container dashboard hidden" id="dashboardScreen">
+  <div class="config-header" style="margin-bottom: 32px;">
+    <button class="btn-back" onclick="closeDashboard()">← Back</button>
+    <div class="config-header__icon" id="dashIcon">📊</div>
+    <div>
+      <div class="config-header__name" id="dashName">Thematic Analysis Dashboard</div>
+      <div class="config-header__paradigm" id="dashParadigm">Live Status & Thematic Outputs</div>
+    </div>
+  </div>
+
+  <div class="dashboard-progress-section">
+    <div class="progress-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <h3 class="card-title" style="margin: 0;">Analysis Process Logs</h3>
+        <button class="btn-refresh-sheet" onclick="pollSheetData()">
+          <span class="refresh-icon">🔄</span> Poll for Updates
+        </button>
+      </div>
+
+      <div class="stepper" id="stepper">
+        <div class="step" id="step1">
+          <div class="step-icon">1</div>
+          <div class="step-content">
+            <div class="step-label">Phase 1: Validity Screening</div>
+            <div class="step-status">Checking Validity of Responses...</div>
+          </div>
+        </div>
+        <div class="step" id="step2">
+          <div class="step-icon">2</div>
+          <div class="step-content">
+            <div class="step-label">Phase 2: Initial Coding</div>
+            <div class="step-status">Generating codes via Braun & Clarke reflexive methods...</div>
+          </div>
+        </div>
+        <div class="step" id="step3">
+          <div class="step-icon">3</div>
+          <div class="step-content">
+            <div class="step-label">Phase 3: Theme Generation</div>
+            <div class="step-status">Grouping codes into candidate patterns...</div>
+          </div>
+        </div>
+        <div class="step" id="step4">
+          <div class="step-icon">4</div>
+          <div class="step-content">
+            <div class="step-label">Phase 4: Theme Review</div>
+            <div class="step-status">Refining candidate themes against source datasets...</div>
+          </div>
+        </div>
+        <div class="step" id="step5">
+          <div class="step-icon">5</div>
+          <div class="step-content">
+            <div class="step-label">Phase 5: Narrative Report</div>
+            <div class="step-status">Synthesizing narrative descriptions and report...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thematic Output Viewer -->
+  <div class="results-card hidden" id="resultsCard">
+    <h3 class="card-title">Generated Themes & Subthemes</h3>
+    <div class="themes-grid" id="themesGrid">
+      <!-- Dynamically populated theme cards -->
+    </div>
+  </div>
+
+  <div class="footer">
+    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+    Thematic Dashboard connects dynamically to your Output Google Spreadsheet.
   </div>
 </div>
 
@@ -568,6 +868,15 @@
                 Question Header Keyword
               </label>
               <input type="text" id="questionKeyword" placeholder="biggest challenge">
+            </div>
+          </div>
+          <div class="form-row" style="margin-top: 12px;">
+            <div class="form-group">
+              <label for="themesSheetName">
+                Final Themes Sheet Name
+                <span class="label-desc">Google Sheet tab where themes are output (e.g. "Final Themes")</span>
+              </label>
+              <input type="text" id="themesSheetName" value="Final Themes" placeholder="Final Themes">
             </div>
           </div>
         </div>
@@ -1251,7 +1560,8 @@ function saveIntegrationSettings() {
     inputSpreadsheetUrl: document.getElementById('inputSpreadsheetUrl').value.trim(),
     outputSpreadsheetUrl: document.getElementById('outputSpreadsheetUrl').value.trim(),
     sheetName: document.getElementById('sheetName').value.trim(),
-    questionKeyword: document.getElementById('questionKeyword').value.trim()
+    questionKeyword: document.getElementById('questionKeyword').value.trim(),
+    themesSheetName: document.getElementById('themesSheetName').value.trim()
   };
   localStorage.setItem('n8n_ta_integration_settings', JSON.stringify(settings));
 }
@@ -1266,6 +1576,7 @@ function loadIntegrationSettings() {
       if (settings.outputSpreadsheetUrl) document.getElementById('outputSpreadsheetUrl').value = settings.outputSpreadsheetUrl;
       if (settings.sheetName) document.getElementById('sheetName').value = settings.sheetName;
       if (settings.questionKeyword) document.getElementById('questionKeyword').value = settings.questionKeyword;
+      if (settings.themesSheetName) document.getElementById('themesSheetName').value = settings.themesSheetName;
     }
   } catch (e) {
     console.error('Error loading integration settings', e);
@@ -1273,8 +1584,9 @@ function loadIntegrationSettings() {
 }
 
 // Add change listeners to auto-save settings
-['webhookUrl', 'inputSpreadsheetUrl', 'outputSpreadsheetUrl', 'sheetName', 'questionKeyword'].forEach(id => {
-  document.getElementById(id).addEventListener('input', saveIntegrationSettings);
+['webhookUrl', 'inputSpreadsheetUrl', 'outputSpreadsheetUrl', 'sheetName', 'questionKeyword', 'themesSheetName'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', saveIntegrationSettings);
 });
 
 async function sendToWebhook() {
@@ -1325,7 +1637,9 @@ async function sendToWebhook() {
       body: JSON.stringify(payload) 
     });
     if (res.ok) {
-      showToast('🚀 Pipeline triggered successfully!');
+      showToast('🚀 Pipeline triggered! Transitioning to dashboard...');
+      closeExportModal();
+      setTimeout(openDashboard, 1500);
     } else {
       showToast(`n8n responded with status ${res.status}`);
     }
@@ -1342,6 +1656,279 @@ async function sendToWebhook() {
 
 document.getElementById('exportModal').addEventListener('click', function(e) { if (e.target === this) closeExportModal(); });
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeExportModal(); });
+
+// ===================== DASHBOARD ENGINE =====================
+let pollInterval = null;
+
+function openDashboard() {
+  document.getElementById('configScreen').classList.add('hidden');
+  document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('dashboardScreen').classList.remove('hidden');
+  
+  const summaryBar = document.getElementById('summaryBar');
+  if (summaryBar) summaryBar.style.display = 'none';
+  
+  const p = PERSONAS.find(x => x.id === currentPersonaId);
+  if (p) {
+    document.getElementById('dashIcon').innerText = p.icon;
+    document.getElementById('dashName').innerText = `${p.name} · Analysis Dashboard`;
+    document.getElementById('dashParadigm').innerText = `Active Paradigm: ${p.paradigm}`;
+  }
+  
+  pollSheetData();
+  
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(pollSheetData, 12000);
+}
+
+function closeDashboard() {
+  document.getElementById('dashboardScreen').classList.add('hidden');
+  document.getElementById('configScreen').classList.remove('hidden');
+  
+  const summaryBar = document.getElementById('summaryBar');
+  if (summaryBar) summaryBar.style.display = 'flex';
+  
+  if (pollInterval) {
+    clearInterval(pollInterval);
+    pollInterval = null;
+  }
+}
+
+async function fetchGoogleSheetRows(spreadsheetId, sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Google Sheets responded with status ${res.status}`);
+  const text = await res.text();
+  const rawJson = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+  const data = JSON.parse(rawJson);
+  if (!data || !data.table || !data.table.rows) return [];
+  
+  return data.table.rows.map(r => {
+    return r.c.map(cell => cell ? cell.v : '');
+  });
+}
+
+function parseGvizRows(rows) {
+  if (!rows || rows.length < 2) return [];
+  const headers = rows[0].map(h => (h || '').toString().toLowerCase());
+  
+  const themeIdx = headers.findIndex(h => h.includes('theme') && !h.includes('sub'));
+  const subthemeIdx = headers.findIndex(h => h.includes('subtheme') || h.includes('sub-theme'));
+  const descIdx = headers.findIndex(h => h.includes('desc') || h.includes('definition'));
+  const quotesIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim') || h.includes('evidence'));
+  const methodIdx = headers.findIndex(h => h.includes('method') || h.includes('saldana'));
+
+  const parsedThemes = [];
+  
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const themeName = (themeIdx !== -1 && themeIdx < row.length) ? row[themeIdx] : '';
+    if (!themeName) continue;
+    
+    const subthemeName = (subthemeIdx !== -1 && subthemeIdx < row.length) ? row[subthemeIdx] : '';
+    const description = (descIdx !== -1 && descIdx < row.length) ? row[descIdx] : '';
+    const quotes = (quotesIdx !== -1 && quotesIdx < row.length) ? row[quotesIdx] : '';
+    const method = (methodIdx !== -1 && methodIdx < row.length) ? row[methodIdx] : '';
+    
+    let themeObj = parsedThemes.find(t => t.name === themeName);
+    if (!themeObj) {
+      themeObj = {
+        name: themeName,
+        description: description,
+        method: method,
+        subthemes: []
+      };
+      parsedThemes.push(themeObj);
+    }
+    
+    if (subthemeName || quotes) {
+      themeObj.subthemes.push({
+        name: subthemeName,
+        quotes: quotes ? quotes.toString().split(';').map(q => q.trim()).filter(Boolean) : []
+      });
+    }
+  }
+  
+  return parsedThemes;
+}
+
+function renderThemeCards(rows) {
+  const container = document.getElementById('themesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const parsed = parseGvizRows(rows);
+  if (parsed.length === 0) {
+    container.innerHTML = `<div class="theme-card" style="padding: 24px; text-align: center; color: var(--text-muted);">No structured themes parsed. Double check if column headers contain "theme", "subtheme", "description" or "quotes".</div>`;
+    return;
+  }
+  
+  parsed.forEach((theme, index) => {
+    const card = document.createElement('div');
+    card.className = 'theme-card';
+    
+    const header = document.createElement('div');
+    header.className = 'theme-card__header';
+    header.onclick = () => toggleThemeCardBody(index);
+    
+    const titleArea = document.createElement('div');
+    titleArea.className = 'theme-title-area';
+    
+    const title = document.createElement('span');
+    title.className = 'theme-card__title';
+    title.innerText = theme.name;
+    
+    const subCount = document.createElement('span');
+    subCount.className = 'theme-card__subthemes';
+    
+    const counts = theme.subthemes.filter(s => s.name).length;
+    subCount.innerText = `${counts} subtheme(s) · ${theme.subthemes.reduce((acc, s) => acc + s.quotes.length, 0)} direct quote support(s)`;
+    
+    titleArea.appendChild(title);
+    titleArea.appendChild(subCount);
+    
+    const badge = document.createElement('span');
+    badge.className = 'theme-card__badge';
+    badge.innerText = theme.method ? `${theme.method}` : 'Reflexive Theme';
+    
+    header.appendChild(titleArea);
+    header.appendChild(badge);
+    
+    const body = document.createElement('div');
+    body.className = 'theme-card__body';
+    body.id = `themeBody_${index}`;
+    
+    const desc = document.createElement('p');
+    desc.className = 'theme-card__desc';
+    desc.innerText = theme.description || 'No description summary available.';
+    body.appendChild(desc);
+    
+    theme.subthemes.forEach(sub => {
+      if (sub.name) {
+        const subSec = document.createElement('div');
+        subSec.className = 'subtheme-section';
+        
+        const subTitle = document.createElement('h4');
+        subTitle.className = 'subtheme-title';
+        subTitle.innerText = sub.name;
+        subSec.appendChild(subTitle);
+        
+        if (sub.quotes && sub.quotes.length > 0) {
+          const quotesSec = document.createElement('div');
+          quotesSec.className = 'quotes-section';
+          
+          const qTitle = document.createElement('div');
+          qTitle.className = 'quotes-title';
+          qTitle.innerText = 'Supporting Verbatim Quotes';
+          quotesSec.appendChild(qTitle);
+          
+          sub.quotes.forEach(q => {
+            const qItem = document.createElement('div');
+            qItem.className = 'quote-item';
+            qItem.innerText = q;
+            quotesSec.appendChild(qItem);
+          });
+          subSec.appendChild(quotesSec);
+        }
+        body.appendChild(subSec);
+      } else if (sub.quotes && sub.quotes.length > 0) {
+        const quotesSec = document.createElement('div');
+        quotesSec.className = 'quotes-section';
+        
+        const qTitle = document.createElement('div');
+        qTitle.className = 'quotes-title';
+        qTitle.innerText = 'Supporting Verbatim Quotes';
+        quotesSec.appendChild(qTitle);
+        
+        sub.quotes.forEach(q => {
+          const qItem = document.createElement('div');
+          qItem.className = 'quote-item';
+          qItem.innerText = q;
+          quotesSec.appendChild(qItem);
+        });
+        body.appendChild(quotesSec);
+      }
+    });
+    
+    card.appendChild(header);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+}
+
+function toggleThemeCardBody(index) {
+  const body = document.getElementById(`themeBody_${index}`);
+  if (body) {
+    const isFlex = window.getComputedStyle(body).display === 'flex';
+    body.style.display = isFlex ? 'none' : 'flex';
+  }
+}
+
+function setStepperState(currentStepIndex) {
+  const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+  steps.forEach((stepId, index) => {
+    const stepEl = document.getElementById(stepId);
+    if (!stepEl) return;
+    
+    const statusEl = stepEl.querySelector('.step-status');
+    
+    if (index < currentStepIndex - 1) {
+      stepEl.className = 'step completed';
+      if (statusEl) statusEl.innerText = 'Completed';
+    } else if (index === currentStepIndex - 1) {
+      stepEl.className = 'step active';
+      if (statusEl) statusEl.innerText = getStepActiveText(index + 1);
+    } else {
+      stepEl.className = 'step';
+      if (statusEl) statusEl.innerText = 'Pending';
+    }
+  });
+}
+
+function getStepActiveText(stepNum) {
+  switch (stepNum) {
+    case 1: return 'Validity screening active...';
+    case 2: return 'Generating initial codes...';
+    case 3: return 'Synthesizing candidate themes...';
+    case 4: return 'Refining themes against data...';
+    case 5: return 'Writing final report...';
+    default: return 'Processing...';
+  }
+}
+
+async function pollSheetData() {
+  const inputUrl = document.getElementById('inputSpreadsheetUrl').value.trim();
+  const outputUrl = document.getElementById('outputSpreadsheetUrl').value.trim() || inputUrl;
+  const themesSheetName = document.getElementById('themesSheetName').value.trim() || 'Final Themes';
+  
+  if (!outputUrl) {
+    showToast('Spreadsheet URL not configured.');
+    return;
+  }
+  
+  const extractSpreadsheetId = (urlOrId) => {
+    const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : urlOrId;
+  };
+  
+  const spreadsheetId = extractSpreadsheetId(outputUrl);
+  
+  try {
+    const rows = await fetchGoogleSheetRows(spreadsheetId, themesSheetName);
+    if (rows && rows.length > 1) {
+      setStepperState(6); // Light all green
+      renderThemeCards(rows);
+      document.getElementById('resultsCard').classList.remove('hidden');
+    } else {
+      setStepperState(3); // Indication that it's generating themes
+      document.getElementById('resultsCard').classList.add('hidden');
+    }
+  } catch (error) {
+    console.error('Error fetching sheet rows:', error);
+    setStepperState(2); // Keep processing codes
+    document.getElementById('resultsCard').classList.add('hidden');
+  }
+}
 
 // ===================== INIT =====================
 renderSelect();
