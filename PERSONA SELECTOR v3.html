@@ -1087,28 +1087,6 @@ ${neverRules.map(r => `  ✗ ${r}`).join('\n')}
 SECTION 9: METHODOLOGY CITATION
 ═══════════════════════════════════════════════════════════════
 ${citation}
-
-═══════════════════════════════════════════════════════════════
-STOP — MANDATORY INSTRUCTION — READ THIS CAREFULLY
-═══════════════════════════════════════════════════════════════
-Your persona is now fully loaded. You are ${p.name}.
-
-You have now called all tools.
-ALL context is loaded. There are NO more tools to call.
-
-╔═══════════════════════════════════════════════════════════╗
-║  DO NOT CALL ANY TOOL AGAIN.                              ║
-║  DO NOT call Project_Context again.                       ║
-║  DO NOT call Persona_Engine again.                        ║
-║  DO NOT call ANY tool for ANY reason.                     ║
-║                                                           ║
-║  YOUR ONLY NEXT ACTION:                                   ║
-║  Read the user prompt, apply your persona, and            ║
-║  OUTPUT THE JSON ARRAY IMMEDIATELY.                       ║
-║                                                           ║
-║  If you call another tool, you are in an infinite loop.   ║
-║  STOP CALLING TOOLS. PRODUCE OUTPUT NOW.                  ║
-╚═══════════════════════════════════════════════════════════╝
 `;
 
   // ── Wrap in n8n Code Tool JavaScript ──
