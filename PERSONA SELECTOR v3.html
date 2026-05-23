@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytical Persona Selector — n8n Code Tool Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-void: #06090F;
+    --bg-deep: #0A0E17;
+    --bg-card: #111827;
+    --bg-card-hover: #151B2E;
+    --bg-surface: #1E293B;
+    --border: #1E293B;
+    --border-light: #334155;
+    --text-primary: #F1F5F9;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-dim: #64748B;
+    --text-faint: #475569;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    --accent-blue: #60A5FA;
+    --accent-purple: #A78BFA;
+    --accent-pink: #F472B6;
+  }
+
+  body {
+    font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1040px; margin: 0 auto; padding: 32px 20px; }
+
+  .header { text-align: center; margin-bottom: 48px; }
+  .header__eyebrow {
+    font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px;
+  }
+  .header__title {
+    font-size: 32px; font-weight: 700; margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header__sub {
+    color: var(--text-muted); font-size: 14px; max-width: 560px; margin: 0 auto;
+    font-weight: 300;
+  }
+
+  .persona-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .persona-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+  }
+  .persona-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--persona-color); opacity: 0; transition: opacity 0.3s;
+  }
+  .persona-card:hover {
+    background: var(--bg-card-hover); border-color: color-mix(in srgb, var(--persona-color) 40%, transparent);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px color-mix(in srgb, var(--persona-color) 12%, transparent);
+  }
+  .persona-card:hover::before { opacity: 1; }
+
+  .persona-card__head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .persona-card__icon {
+    font-size: 28px; width: 52px; height: 52px; display: flex;
+    align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--persona-color) 10%, transparent);
+    border-radius: 12px; flex-shrink: 0;
+  }
+  .persona-card__name { font-size: 18px; font-weight: 700; }
+  .persona-card__tagline { font-size: 12px; color: var(--persona-color); font-style: italic; margin-top: 2px; }
+  .persona-card__desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+  .persona-card__paradigm {
+    font-size: 10px; color: var(--text-faint); border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  .persona-card__paradigm strong { color: var(--text-dim); font-weight: 500; }
+
+  .persona-card__bars { display: flex; gap: 6px; margin-top: 14px; }
+  .persona-card__bar-item { flex: 1; }
+  .persona-card__bar-label { font-size: 9px; color: var(--text-dim); text-align: center; margin-bottom: 4px; font-family: 'IBM Plex Mono', monospace; }
+  .persona-card__bar-track { height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; }
+  .persona-card__bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  .configure { display: none; }
+  .configure.active { display: block; }
+  .select.hidden { display: none; }
+
+  .config-header { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; }
+  .btn-back {
+    background: var(--bg-surface); border: 1px solid var(--border-light);
+    border-radius: 8px; color: var(--text-muted); padding: 10px 16px;
+    cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.2s;
+  }
+  .btn-back:hover { background: var(--border-light); color: var(--text-primary); }
+  .config-header__icon {
+    font-size: 36px; width: 56px; height: 56px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: 14px; flex-shrink: 0;
+  }
+  .config-header__name { font-size: 26px; font-weight: 700; }
+  .config-header__paradigm { font-size: 13px; margin-top: 2px; }
+
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  @media (max-width: 768px) { .config-grid { grid-template-columns: 1fr; } .persona-grid { grid-template-columns: 1fr; } }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px; font-weight: 500;
+  }
+
+  .dial-card {
+    background: var(--bg-card); border-radius: 12px; padding: 18px;
+    border: 1px solid var(--border); margin-bottom: 14px;
+    transition: border-color 0.3s;
+  }
+  .dial-card.warning { border-color: color-mix(in srgb, var(--danger) 50%, transparent); }
+  .dial-card__head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .dial-card__title { font-size: 15px; font-weight: 600; }
+  .dial-card__source { font-size: 10px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+
+  .dial-card__poles { display: flex; justify-content: space-between; margin-bottom: 10px; }
+  .dial-card__pole { font-size: 12px; font-weight: 400; color: var(--text-dim); transition: all 0.3s; }
+  .dial-card__pole.active { font-weight: 600; }
+  .dial-card__pole.active-left { color: var(--accent-blue); }
+  .dial-card__pole.active-right { color: var(--accent-pink); }
+
+  .dial-track-container { position: relative; height: 36px; margin-bottom: 6px; }
+  .dial-defensible-zone {
+    position: absolute; top: 13px; height: 10px; border-radius: 5px;
+    transition: all 0.3s;
+  }
+  .dial-slider {
+    position: absolute; top: 0; left: 0; width: 100%; height: 36px;
+    -webkit-appearance: none; appearance: none; background: transparent;
+    cursor: pointer; z-index: 2;
+  }
+  .dial-slider::-webkit-slider-runnable-track {
+    height: 10px; border-radius: 5px;
+    background: linear-gradient(to right, #1E3A5F, #3B1F5E, #5E1A3B);
+    opacity: 0.25;
+  }
+  .dial-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px;
+    border-radius: 50%; border: 3px solid var(--bg-deep);
+    margin-top: -5px; cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+  .dial-slider::-moz-range-track {
+    height: 10px; border-radius: 5px;
+    background: linear-gradient(to right, #1E3A5F, #3B1F5E, #5E1A3B);
+    opacity: 0.25; border: none;
+  }
+  .dial-slider::-moz-range-thumb {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 3px solid var(--bg-deep); cursor: pointer;
+  }
+
+  .dial-effective-dot {
+    position: absolute; top: 10px; width: 16px; height: 16px;
+    border-radius: 50%; border: 2px solid var(--warning);
+    background: color-mix(in srgb, var(--warning) 25%, transparent);
+    z-index: 1; transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .dial-card__info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .dial-card__value { font-size: 10px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; }
+  .dial-card__value .lens-shift { color: var(--warning); }
+  .dial-card__range { font-size: 10px; font-family: 'IBM Plex Mono', monospace; }
+  .dial-card__descs { display: flex; justify-content: space-between; margin-top: 8px; }
+  .dial-card__desc-text { font-size: 10px; color: var(--text-faint); max-width: 46%; line-height: 1.4; }
+  .dial-card__desc-text:last-child { text-align: right; }
+
+  .dial-warning-box {
+    margin-top: 10px; padding: 10px 12px;
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+    border-radius: 8px; font-size: 11px; color: #FCA5A5; line-height: 1.5;
+  }
+
+  .lens-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .lens-card:hover { background: var(--bg-card-hover); }
+  .lens-card.active { border-color: color-mix(in srgb, var(--persona-color) 50%, transparent); }
+  .lens-card.incompat { opacity: 0.35; cursor: not-allowed; }
+  .lens-card__head { display: flex; justify-content: space-between; align-items: center; }
+  .lens-card__left { display: flex; align-items: center; gap: 10px; }
+  .lens-card__icon { font-size: 18px; }
+  .lens-card__name { font-size: 14px; font-weight: 600; }
+  .lens-card__tag { font-size: 10px; margin-left: 6px; }
+  .lens-card__tag.active-tag { color: var(--persona-color); }
+  .lens-card__tag.incompat-tag { color: var(--danger); }
+  .lens-card__check {
+    width: 20px; height: 20px; border-radius: 5px;
+    border: 2px solid var(--border-light); display: flex;
+    align-items: center; justify-content: center;
+    font-size: 12px; color: #fff; transition: all 0.2s; flex-shrink: 0;
+  }
+  .lens-card.active .lens-card__check {
+    background: var(--persona-color); border-color: var(--persona-color);
+  }
+  .lens-card__details { margin-top: 10px; display: none; }
+  .lens-card.active .lens-card__details { display: block; }
+  .lens-card__cite { font-size: 10px; color: var(--text-dim); margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace; }
+  .lens-card__concepts { display: flex; flex-wrap: wrap; gap: 5px; }
+  .lens-concept {
+    font-size: 10px; padding: 3px 10px; border-radius: 12px;
+    font-weight: 500;
+  }
+  .lens-card__push { font-size: 10px; color: var(--warning); margin-top: 8px; font-family: 'IBM Plex Mono', monospace; }
+
+  .coding-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-top: 20px;
+  }
+  .coding-box__label { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+  .coding-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .coding-chip {
+    font-size: 11px; padding: 5px 12px; border-radius: 7px;
+    font-weight: 500; font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .citation-box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; margin-top: 20px;
+  }
+  .citation-box__label {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 10px; font-weight: 500;
+  }
+  .citation-box__text {
+    font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+    font-style: italic;
+  }
+
+  .coherence-box {
+    margin-top: 16px; padding: 16px; border-radius: 10px;
+    background: color-mix(in srgb, #7F1D1D 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+    display: none;
+  }
+  .coherence-box.visible { display: block; }
+  .coherence-box__title { font-size: 13px; font-weight: 600; color: #FCA5A5; margin-bottom: 8px; }
+  .coherence-box__item { font-size: 11px; color: #FDA4AF; margin-bottom: 5px; line-height: 1.5; }
+
+  .summary-bar {
+    margin-top: 36px; padding: 20px 28px; border-radius: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
+  }
+  .summary-bar__title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .summary-bar__detail { font-size: 12px; color: var(--text-muted); }
+  .summary-bar__btn {
+    padding: 12px 28px; border-radius: 10px; font-weight: 700;
+    font-size: 14px; color: var(--bg-deep); cursor: pointer;
+    border: none; font-family: inherit; transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .summary-bar__btn:hover { transform: scale(1.03); }
+
+  .footer {
+    text-align: center; margin-top: 48px; padding-top: 24px;
+    border-top: 1px solid var(--border); font-size: 10px;
+    color: var(--text-faint); line-height: 1.8;
+  }
+
+  .modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(6,9,15,0.85); backdrop-filter: blur(8px);
+    z-index: 1000; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: 16px; max-width: 780px; width: 100%;
+    max-height: 85vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .modal__header {
+    padding: 24px 28px 16px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal__title { font-size: 18px; font-weight: 700; }
+  .modal__subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .modal__close {
+    background: var(--bg-surface); border: 1px solid var(--border-light);
+    border-radius: 8px; color: var(--text-muted); padding: 8px 12px;
+    cursor: pointer; font-size: 14px; font-family: inherit;
+  }
+  .modal__close:hover { background: var(--border-light); color: var(--text-primary); }
+  .modal__body { padding: 20px 28px; overflow-y: auto; flex: 1; }
+  .modal__code {
+    background: var(--bg-void); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; line-height: 1.6; color: var(--text-secondary);
+    white-space: pre-wrap; word-break: break-all; max-height: 50vh; overflow-y: auto;
+    tab-size: 2;
+  }
+  .modal__actions {
+    padding: 16px 28px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .btn-action {
+    padding: 10px 20px; border-radius: 8px; font-weight: 600;
+    font-size: 13px; cursor: pointer; border: none; font-family: inherit;
+    transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+  }
+  .btn-action:hover { transform: scale(1.02); }
+  .btn-action--primary { color: var(--bg-deep); }
+  .btn-action--secondary { background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-secondary); }
+  .btn-action--secondary:hover { background: var(--border-light); }
+
+  .n8n-integration-form {
+    margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;
+  }
+  .form-grid {
+    display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 16px;
+  }
+  .form-row {
+    display: flex; gap: 12px;
+  }
+  .form-group {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .form-group.half {
+    flex: 1;
+  }
+  .form-group label {
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .form-group label span.label-desc {
+    font-size: 9px; font-weight: 400; color: var(--text-dim); text-transform: none; letter-spacing: 0;
+  }
+  .form-group input {
+    padding: 10px 14px; border-radius: 8px;
+    background: var(--bg-void); border: 1px solid var(--border);
+    color: var(--text-secondary); font-family: inherit;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .form-group input::placeholder { color: var(--text-faint); }
+  .form-group input:focus {
+    outline: none; border-color: var(--persona-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--persona-color) 20%, transparent);
+  }
+  .btn-trigger-n8n {
+    width: 100%; padding: 12px; border-radius: 8px; font-weight: 700;
+    font-size: 14px; color: var(--bg-deep); background: var(--persona-color);
+    cursor: pointer; border: none; font-family: inherit; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--persona-color) 30%, transparent);
+    margin-top: 8px;
+  }
+  .btn-trigger-n8n:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px color-mix(in srgb, var(--persona-color) 45%, transparent);
+  }
+  .btn-trigger-n8n:active {
+    transform: translateY(0);
+  }
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--bg-deep); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; }
+  .tab-btn {
+    padding: 10px 20px; background: none; border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim); font-family: inherit; font-size: 13px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn.active { border-bottom-color: var(--accent-blue); color: var(--text-primary); font-weight: 600; }
+
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: 10px; padding: 12px 24px; font-size: 13px; font-weight: 500;
+    color: var(--text-primary); z-index: 2000;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.visible { transform: translateX(-50%) translateY(0); }
+  .toast__icon { margin-right: 8px; }
+</style>
+</head>
+<body>
+
+<!-- ============ SELECT SCREEN ============ -->
+<div class="container select" id="selectScreen">
+  <div class="header">
+    <div class="header__eyebrow">Automated Thematic Analysis Engine</div>
+    <h1 class="header__title">Select Your Analytical Persona</h1>
+    <p class="header__sub">Each persona pre-calibrates the Braun & Clarke (2006, 2022) continua and Saldaña (2021) coding profile. Configure dials and sensitizing lenses, then export a ready-to-paste n8n Code Tool.</p>
+  </div>
+  <div class="persona-grid" id="personaGrid"></div>
+  <div class="footer">
+    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+    Persona architecture designed for defensible automated thematic analysis
+  </div>
+</div>
+
+<!-- ============ CONFIGURE SCREEN ============ -->
+<div class="container configure" id="configScreen">
+  <div class="config-header">
+    <button class="btn-back" onclick="goBack()">← Back</button>
+    <div class="config-header__icon" id="cfgIcon"></div>
+    <div>
+      <div class="config-header__name" id="cfgName"></div>
+      <div class="config-header__paradigm" id="cfgParadigm"></div>
+    </div>
+  </div>
+
+  <div class="config-grid">
+    <div>
+      <div class="section-label">Methodological Dials · Braun & Clarke Continua</div>
+      <div id="dialsContainer"></div>
+      <div class="coherence-box" id="coherenceBox">
+        <div class="coherence-box__title">⚠ Coherence Warnings</div>
+        <div id="coherenceItems"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Sensitizing Frameworks · Co-equal Analytical Commitments</div>
+      <div id="lensContainer"></div>
+
+      <div class="section-label" style="margin-top:24px">Saldaña Coding Profile</div>
+      <div class="coding-box">
+        <div class="coding-box__label">Priority methods for this configuration:</div>
+        <div class="coding-chips" id="codingChips"></div>
+      </div>
+
+      <div class="citation-box">
+        <div class="citation-box__label">Auto-generated Citation Anchor</div>
+        <div class="citation-box__text" id="citationText"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-bar" id="summaryBar">
+    <div>
+      <div class="summary-bar__title">Configuration Summary</div>
+      <div class="summary-bar__detail" id="summaryDetail"></div>
+    </div>
+    <button class="summary-bar__btn" id="summaryBtn" onclick="openExportModal()">Export n8n Code Tool →</button>
+  </div>
+
+  <div class="footer">
+    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+    Persona architecture designed for defensible automated thematic analysis
+  </div>
+</div>
+
+<!-- ============ EXPORT MODAL ============ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal">
+    <div class="modal__header">
+      <div>
+        <div class="modal__title" id="modalTitle">⚙️ Generated n8n Code Tool</div>
+        <div class="modal__subtitle" id="modalSubtitle">Paste this JavaScript directly into an n8n Code Tool node attached to your AI Agent</div>
+      </div>
+      <button class="modal__close" onclick="closeExportModal()">✕ Close</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabCode" onclick="switchTab('code')">n8n Code Tool</button>
+      <button class="tab-btn" id="tabJson" onclick="switchTab('json')">Raw Config JSON</button>
+    </div>
+    <div class="modal__body">
+      <pre class="modal__code" id="exportContent"></pre>
+
+      <div class="n8n-integration-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="webhookUrl">
+              n8n Webhook URL 
+              <span class="label-desc">URL from the Webhook Trigger node in n8n</span>
+            </label>
+            <input type="text" id="webhookUrl" placeholder="https://your-n8n-instance.com/webhook/persona-thematic-analysis">
+          </div>
+          <div class="form-group">
+            <label for="inputSpreadsheetUrl">
+              Input Google Spreadsheet URL 
+              <span class="label-desc">Contains the participant responses</span>
+            </label>
+            <input type="text" id="inputSpreadsheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
+          </div>
+          <div class="form-group">
+            <label for="outputSpreadsheetUrl">
+              Output Google Spreadsheet URL
+              <span class="label-desc">Where results will be written (optional, defaults to Input)</span>
+            </label>
+            <input type="text" id="outputSpreadsheetUrl" placeholder="Leave blank to use the same spreadsheet">
+          </div>
+          <div class="form-row">
+            <div class="form-group half">
+              <label for="sheetName">
+                Responses Sheet Name
+              </label>
+              <input type="text" id="sheetName" placeholder="Form Responses 1">
+            </div>
+            <div class="form-group half">
+              <label for="questionKeyword">
+                Question Header Keyword
+              </label>
+              <input type="text" id="questionKeyword" placeholder="biggest challenge">
+            </div>
+          </div>
+        </div>
+        <button class="btn-trigger-n8n" id="btnTriggerWorkflow" onclick="sendToWebhook()">
+          <span>🚀 Trigger Automated n8n Pipeline</span>
+          <div class="spinner hidden" id="n8nSpinner"></div>
+        </button>
+      </div>
+    </div>
+    <div class="modal__actions">
+      <button class="btn-action btn-action--primary" id="btnCopy" onclick="copyCurrentTab()">📋 Copy n8n Code Tool</button>
+      <button class="btn-action btn-action--secondary" id="btnDownload" onclick="downloadCurrentTab()">⬇ Download</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast__icon">✓</span> <span id="toastMsg"></span></div>
+
+<script>
+// ===================== DATA =====================
+
+const PERSONAS = [
+  { id:"empiricist", name:"The Empiricist", icon:"🔬", tagline:"Measure twice, code once",
+    paradigm:"Post-Positivist / Coding Reliability TA",
+    cite:"Miles, Huberman & Saldaña (2014); Guest, MacQueen & Namey (2012)",
+    description:"Systematic, replicable, structured. Seeks objective patterns through rigorous procedures. Inter-coder reliability matters. Themes are discovered, not generated.",
+    dials:{epistemology:15,orientation:20,direction:75,depth:20},
+    bounds:{epistemology:[5,35],orientation:[5,40],direction:[55,95],depth:[5,40]},
+    coding:["Structural","Descriptive","Protocol","Magnitude","Attribute"],
+    color:"#3B82F6", compatLens:["phenomenological"], incompatLens:["poststructuralist","discourse"]
+  },
+  { id:"explorer", name:"The Explorer", icon:"🧭", tagline:"Let the data speak first",
+    paradigm:"Inductive Realist / Data-Driven TA",
+    cite:"Braun & Clarke (2006); Glaser (1992); Boyatzis (1998)",
+    description:"Open, emergent, close-reading. Suspends prior theory to attend carefully to what participants actually say. Codes rise from the ground up.",
+    dials:{epistemology:25,orientation:25,direction:15,depth:25},
+    bounds:{epistemology:[5,50],orientation:[5,45],direction:[5,40],depth:[5,50]},
+    coding:["In Vivo","Descriptive","Initial / Open","Process","Holistic"],
+    color:"#10B981", compatLens:["phenomenological","narrative"], incompatLens:["poststructuralist"]
+  },
+  { id:"interpreter", name:"The Interpreter", icon:"🔮", tagline:"Meaning is made, not found",
+    paradigm:"Constructivist / Reflexive TA",
+    cite:"Charmaz (2014); Braun & Clarke (2022); Schwandt (2000)",
+    description:"Constructionist, reflexive, depth-seeking. Reality is multiple and co-constructed. Subjectivity is a resource. Themes are actively generated through interpretive labor.",
+    dials:{epistemology:80,orientation:35,direction:25,depth:75},
+    bounds:{epistemology:[55,95],orientation:[15,55],direction:[5,50],depth:[55,95]},
+    coding:["In Vivo","Initial / Open","Focused","Axial","Theoretical"],
+    color:"#8B5CF6", compatLens:["phenomenological","narrative","discourse","feminist","poststructuralist"], incompatLens:[]
+  },
+  { id:"critic", name:"The Critic", icon:"⚖️", tagline:"Who benefits? Who's silenced?",
+    paradigm:"Critical Theory / Transformative TA",
+    cite:"Guba & Lincoln (1994, 2005); Kincheloe & McLaren (2005); Freire (1970)",
+    description:"Power-conscious, emancipatory, structural. Examines how ideologies, institutions, and material conditions produce inequity. The goal is transformation.",
+    dials:{epistemology:55,orientation:85,direction:55,depth:85},
+    bounds:{epistemology:[35,75],orientation:[60,95],direction:[30,80],depth:[65,95]},
+    coding:["Values","Versus","Evaluation","Dramaturgical","Process"],
+    color:"#EF4444", compatLens:["feminist","crt","postcolonial","discourse","poststructuralist"], incompatLens:[]
+  },
+  { id:"specialist", name:"The Specialist", icon:"🎯", tagline:"Theory illuminates what's hidden",
+    paradigm:"Domain-Driven / Deductive TA",
+    cite:"Boyatzis (1998); Strauss & Corbin (1990); Crabtree & Miller (1999)",
+    description:"Theory-informed, framework-guided, expert-driven. Brings deep disciplinary knowledge to bear. Pre-existing models guide code development.",
+    dials:{epistemology:40,orientation:45,direction:85,depth:65},
+    bounds:{epistemology:[15,70],orientation:[20,65],direction:[60,95],depth:[40,85]},
+    coding:["Provisional","Protocol","Hypothesis","Elaborative","Pattern"],
+    color:"#F59E0B", compatLens:["phenomenological","narrative","feminist","crt","postcolonial"], incompatLens:["poststructuralist"]
+  },
+  { id:"strategist", name:"The Strategist", icon:"♟️", tagline:"What works for the problem at hand",
+    paradigm:"Pragmatist / Applied / Framework TA",
+    cite:"Morgan (2007); Patton (2015); Ritchie & Spencer (1994); Gale et al. (2013)",
+    description:"Flexible, problem-driven, utility-focused. The research question drives all decisions. Actionability of findings takes precedence over paradigmatic purity.",
+    dials:{epistemology:50,orientation:50,direction:50,depth:50},
+    bounds:{epistemology:[10,90],orientation:[10,90],direction:[10,90],depth:[10,90]},
+    coding:["Eclectic","Evaluation","Focused","Pattern","Theming the Data"],
+    color:"#06B6D4", compatLens:["phenomenological","narrative","feminist","crt","postcolonial","discourse"], incompatLens:["poststructuralist"]
+  }
+];
+
+const DIAL_META = [
+  { key:"epistemology", label:"Epistemology", left:"Realist", right:"Constructionist",
+    leftDesc:"Meaning is accessible; experience reflects reality", rightDesc:"Meaning is constructed through discourse and context",
+    source:"Braun & Clarke (2006, 2022)" },
+  { key:"orientation", label:"Orientation", left:"Experiential", right:"Critical",
+    leftDesc:"What do participants think, feel, experience?", rightDesc:"What structures and discourses shape experience?",
+    source:"Braun & Clarke (2019, 2022)" },
+  { key:"direction", label:"Direction", left:"Inductive", right:"Deductive",
+    leftDesc:"Codes emerge from data without prior framework", rightDesc:"Codes derived from existing theory or literature",
+    source:"Boyatzis (1998); Braun & Clarke (2006)" },
+  { key:"depth", label:"Depth", left:"Semantic", right:"Latent",
+    leftDesc:"Surface meaning — what is explicitly said", rightDesc:"Underlying assumptions, ideologies, structures",
+    source:"Braun & Clarke (2006, 2022)" }
+];
+
+const LENSES = [
+  { id:"feminist", name:"Feminist", icon:"♀", cite:"Harding (1987); Haraway (1988); Collins (2000)",
+    concepts:["Gender dynamics","Intersectionality","Invisible labor","Embodiment","Standpoint"],
+    dialPush:{orientation:15,depth:10} },
+  { id:"crt", name:"Critical Race", icon:"✊", cite:"Delgado & Stefancic (2017); Crenshaw (1991)",
+    concepts:["Systemic racism","Counter-stories","Interest convergence","Microaggressions","Intersectionality"],
+    dialPush:{orientation:20,depth:10} },
+  { id:"postcolonial", name:"Postcolonial", icon:"🌍", cite:"Said (1978); Smith (2021); Spivak (1988)",
+    concepts:["Colonial legacies","Epistemic violence","Hybridity","Subaltern voice","Knowledge systems"],
+    dialPush:{orientation:15,depth:15} },
+  { id:"phenomenological", name:"Phenomenological", icon:"◯", cite:"Giorgi (2009); van Manen (2014); Smith et al. (2009)",
+    concepts:["Lived experience","Bracketing / epoché","Essence","Embodiment","Lifeworld"],
+    dialPush:{orientation:-10,depth:10,epistemology:-10} },
+  { id:"narrative", name:"Narrative", icon:"📖", cite:"Riessman (2008); Clandinin & Connelly (2000)",
+    concepts:["Story structure","Identity construction","Turning points","Temporality","Performance"],
+    dialPush:{depth:5} },
+  { id:"discourse", name:"Discourse", icon:"💬", cite:"Foucault (1972); Fairclough (2003); Potter & Wetherell (1987)",
+    concepts:["Subject positions","Power/knowledge","Rhetorical strategies","Silences","Intertextuality"],
+    dialPush:{epistemology:20,orientation:15,depth:15} },
+  { id:"poststructuralist", name:"Post-Structuralist", icon:"∞", cite:"Derrida (1976); Lather (2007); St. Pierre (2000)",
+    concepts:["Deconstruction","Binary disruption","Rhizomatic thinking","Excess & rupture","Anti-categorization"],
+    dialPush:{epistemology:25,orientation:15,depth:20} }
+];
+
+// ===================== STATE =====================
+let state = {
+  selectedId: null,
+  dials: {},
+  activeLenses: [],
+  warnings: []
+};
+
+function getPersona() { return PERSONAS.find(p => p.id === state.selectedId); }
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function getEffectiveDials() {
+  const eff = { ...state.dials };
+  state.activeLenses.forEach(lid => {
+    const lens = LENSES.find(l => l.id === lid);
+    if (lens && lens.dialPush) {
+      Object.entries(lens.dialPush).forEach(([k, v]) => {
+        eff[k] = clamp((eff[k] || 0) + v, 0, 100);
+      });
+    }
+  });
+  return eff;
+}
+
+// ===================== RENDER: SELECT =====================
+function renderSelect() {
+  const grid = document.getElementById('personaGrid');
+  grid.innerHTML = '';
+  PERSONAS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'persona-card';
+    card.style.setProperty('--persona-color', p.color);
+    card.onclick = () => selectPersona(p.id);
+    card.innerHTML = `
+      <div class="persona-card__head">
+        <div class="persona-card__icon">${p.icon}</div>
+        <div>
+          <div class="persona-card__name">${p.name}</div>
+          <div class="persona-card__tagline">${p.tagline}</div>
+        </div>
+      </div>
+      <div class="persona-card__desc">${p.description}</div>
+      <div class="persona-card__paradigm"><strong>Paradigm:</strong> ${p.paradigm}</div>
+      <div class="persona-card__bars">
+        ${DIAL_META.map(d => `
+          <div class="persona-card__bar-item">
+            <div class="persona-card__bar-label">${d.label.substring(0,4).toUpperCase()}</div>
+            <div class="persona-card__bar-track">
+              <div class="persona-card__bar-fill" style="width:${p.dials[d.key]}%;background:${p.color}"></div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ===================== SELECT PERSONA =====================
+function selectPersona(id) {
+  const p = PERSONAS.find(x => x.id === id);
+  state.selectedId = id;
+  state.dials = { ...p.dials };
+  state.activeLenses = [];
+  state.warnings = [];
+  document.getElementById('selectScreen').classList.add('hidden');
+  document.getElementById('configScreen').classList.add('active');
+  renderConfig();
+}
+
+function goBack() {
+  document.getElementById('selectScreen').classList.remove('hidden');
+  document.getElementById('configScreen').classList.remove('active');
+}
+
+// ===================== RENDER: CONFIG =====================
+function renderConfig() {
+  const p = getPersona();
+  document.documentElement.style.setProperty('--persona-color', p.color);
+  document.getElementById('cfgIcon').textContent = p.icon;
+  document.getElementById('cfgIcon').style.background = p.color + '15';
+  document.getElementById('cfgName').textContent = p.name;
+  document.getElementById('cfgParadigm').textContent = p.paradigm;
+  document.getElementById('cfgParadigm').style.color = p.color;
+  renderDials();
+  renderLenses();
+  renderCoding();
+  renderCitation();
+  renderSummary();
+  renderWarnings();
+}
+
+function renderDials() {
+  const p = getPersona();
+  const eff = getEffectiveDials();
+  const container = document.getElementById('dialsContainer');
+  container.innerHTML = '';
+
+  DIAL_META.forEach(d => {
+    const base = state.dials[d.key];
+    const effVal = eff[d.key];
+    const [bMin, bMax] = p.bounds[d.key];
+    const outOfBounds = base < bMin || base > bMax;
+    const lensOffset = effVal - base;
+
+    const card = document.createElement('div');
+    card.className = 'dial-card' + (outOfBounds ? ' warning' : '');
+    card.innerHTML = `
+      <div class="dial-card__head">
+        <div class="dial-card__title">${d.label}</div>
+        <div class="dial-card__source">${d.source}</div>
+      </div>
+      <div class="dial-card__poles">
+        <div class="dial-card__pole ${base <= 50 ? 'active active-left' : ''}">${d.left}</div>
+        <div class="dial-card__pole ${base > 50 ? 'active active-right' : ''}">${d.right}</div>
+      </div>
+      <div class="dial-track-container">
+        <div class="dial-defensible-zone" style="left:${bMin}%;width:${bMax-bMin}%;background:${p.color}18;border:1px solid ${p.color}30"></div>
+        ${lensOffset !== 0 ? `<div class="dial-effective-dot" style="left:calc(${effVal}% - 8px)"></div>` : ''}
+        <input type="range" min="0" max="100" value="${base}" class="dial-slider"
+          data-dial="${d.key}"
+          oninput="updateDial('${d.key}', this.value)">
+      </div>
+      <div class="dial-card__info">
+        <div class="dial-card__value">
+          Base: ${base}${lensOffset !== 0 ? ` <span class="lens-shift">→ Effective: ${effVal} (${lensOffset>0?'+':''}${lensOffset} from lens)</span>` : ''}
+        </div>
+        <div class="dial-card__range" style="color:${outOfBounds ? 'var(--danger)' : p.color}">
+          ${outOfBounds ? '⚠ Outside bounds' : `Range: ${bMin}–${bMax}`}
+        </div>
+      </div>
+      ${outOfBounds ? `<div class="dial-warning-box">⚠ This value falls outside the defensible range [${bMin}–${bMax}] for ${p.name}. A methodological memo justifying this position will be required for the audit trail.</div>` : ''}
+      <div class="dial-card__descs">
+        <div class="dial-card__desc-text">${d.leftDesc}</div>
+        <div class="dial-card__desc-text">${d.rightDesc}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  updateSliderStyles(p.color);
+}
+
+function updateSliderStyles(color) {
+  let styleEl = document.getElementById('dynamicSliderStyle');
+  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'dynamicSliderStyle'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `
+    .dial-slider::-webkit-slider-thumb { background: ${color}; box-shadow: 0 0 12px ${color}66; }
+    .dial-slider::-moz-range-thumb { background: ${color}; box-shadow: 0 0 12px ${color}66; }
+    .summary-bar { border: 1px solid ${color}33; }
+    .summary-bar__btn { background: ${color}; }
+  `;
+}
+
+function updateDial(key, value) {
+  const p = getPersona();
+  state.dials[key] = clamp(Number(value), 0, 100);
+  state.warnings = [];
+  DIAL_META.forEach(d => {
+    const v = state.dials[d.key];
+    const [min, max] = p.bounds[d.key];
+    if (v < min || v > max) {
+      state.warnings.push({ dial: d.key, msg: `${d.label} is at ${v}, outside defensible range [${min}–${max}] for ${p.name}. Methodological memo required.` });
+    }
+  });
+  renderDials();
+  renderCitation();
+  renderSummary();
+  renderWarnings();
+}
+
+function renderLenses() {
+  const p = getPersona();
+  const container = document.getElementById('lensContainer');
+  container.innerHTML = '';
+  LENSES.forEach(lens => {
+    const isActive = state.activeLenses.includes(lens.id);
+    const isIncompat = p.incompatLens.includes(lens.id);
+    const card = document.createElement('div');
+    card.className = 'lens-card' + (isActive ? ' active' : '') + (isIncompat ? ' incompat' : '');
+    card.style.setProperty('--persona-color', p.color);
+    if (isActive) card.style.background = p.color + '0A';
+    card.onclick = () => { if (!isIncompat) toggleLens(lens.id); };
+    const pushText = lens.dialPush ? Object.entries(lens.dialPush)
+      .map(([k,v]) => `${DIAL_META.find(d=>d.key===k)?.label} ${v>0?'+':''}${v}`).join(', ') : '';
+    card.innerHTML = `
+      <div class="lens-card__head">
+        <div class="lens-card__left">
+          <span class="lens-card__icon">${lens.icon}</span>
+          <span class="lens-card__name">${lens.name}</span>
+          ${isIncompat ? '<span class="lens-card__tag incompat-tag">Incompatible</span>' : ''}
+          ${isActive ? '<span class="lens-card__tag active-tag">Active</span>' : ''}
+        </div>
+        <div class="lens-card__check">${isActive ? '✓' : ''}</div>
+      </div>
+      <div class="lens-card__details">
+        <div class="lens-card__cite">${lens.cite}</div>
+        <div class="lens-card__concepts">
+          ${lens.concepts.map(c => `<span class="lens-concept" style="background:${p.color}18;color:${p.color}">${c}</span>`).join('')}
+        </div>
+        ${pushText ? `<div class="lens-card__push">Dial influence: ${pushText}</div>` : ''}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function toggleLens(lensId) {
+  const idx = state.activeLenses.indexOf(lensId);
+  if (idx >= 0) state.activeLenses.splice(idx, 1);
+  else state.activeLenses.push(lensId);
+  renderLenses();
+  renderDials();
+  renderCitation();
+  renderSummary();
+}
+
+function renderCoding() {
+  const p = getPersona();
+  const chips = document.getElementById('codingChips');
+  chips.innerHTML = p.coding.map(c =>
+    `<span class="coding-chip" style="background:${p.color}18;border:1px solid ${p.color}30;color:${p.color}">${c}</span>`
+  ).join('');
+}
+
+function renderCitation() {
+  const p = getPersona();
+  const lensText = state.activeLenses.length > 0
+    ? ', informed by ' + state.activeLenses.map(lid => {
+        const l = LENSES.find(x => x.id === lid);
+        return `${l.name.toLowerCase()} sensitizing framework (${l.cite})`;
+      }).join(' and ')
+    : '';
+  document.getElementById('citationText').textContent =
+    `This analysis adopted ${p.name.replace('The ','a ').toLowerCase()} analytical stance (${p.cite})${lensText}, following reflexive thematic analysis procedures (Braun & Clarke, 2022) with coding methods drawn from Saldaña (2021).`;
+}
+
+function renderWarnings() {
+  const box = document.getElementById('coherenceBox');
+  const items = document.getElementById('coherenceItems');
+  if (state.warnings.length > 0) {
+    box.classList.add('visible');
+    items.innerHTML = state.warnings.map(w => `<div class="coherence-box__item">• ${w.msg}</div>`).join('');
+  } else {
+    box.classList.remove('visible');
+  }
+  const btn = document.getElementById('summaryBtn');
+  if (btn) {
+    btn.style.background = state.warnings.length > 0 ? 'var(--warning)' : getPersona().color;
+    btn.textContent = state.warnings.length > 0 ? 'Review Warnings →' : 'Export n8n Code Tool →';
+  }
+}
+
+function renderSummary() {
+  const p = getPersona();
+  const nL = state.activeLenses.length;
+  const nW = state.warnings.length;
+  document.getElementById('summaryDetail').textContent =
+    `${p.name} · ${nL === 0 ? 'No' : nL} sensitizing lens${nL !== 1 ? 'es' : ''} · ${nW} warning${nW !== 1 ? 's' : ''}`;
+}
+
+// ===================== PROMPT TEXT BANKS =====================
+
+function band(val) {
+  if (val <= 20) return 'strong_left';
+  if (val <= 40) return 'lean_left';
+  if (val <= 60) return 'center';
+  if (val <= 80) return 'lean_right';
+  return 'strong_right';
+}
+
+const EPIST_TEXT = {
+  strong_left: "You operate from a firmly realist epistemological position. Participant accounts are treated as transparent windows into their lived reality. When someone says \"I lack training,\" that is a factual report of a real deficit — not a discursive construction, not a narrative strategy, not a culturally mediated interpretation. Your codes label what exists in the data. You do not speculate about what participants \"really mean\" beneath what they said. Meaning is on the surface, accessible through careful, literal reading.",
+  lean_left: "You operate from a realist-leaning epistemological position. Participant accounts are treated as largely reliable reflections of their experience, though you acknowledge some contextual shaping. When someone describes a challenge, you take it at face value as a real experience while remaining aware that framing and word choice carry some interpretive weight. Your codes primarily label what is explicitly present in the data, with minimal inferential reach.",
+  center: "You operate from a contextualist epistemological position (Braun & Clarke, 2006). You recognize that participant accounts reflect real experiences AND that those accounts are shaped by the contexts in which they are produced. Meaning is neither purely transparent nor purely constructed — it emerges at the intersection of experience and context. Your codes balance descriptive accuracy with sensitivity to how context shapes expression.",
+  lean_right: "You operate from a constructionist-leaning epistemological position. Participant accounts are understood as actively shaped by available discourses, institutional norms, and cultural repertoires. When someone describes their work, you attend not only to the content but to how they construct their professional identity through the telling. Your codes capture patterns of meaning-making, not just stated facts. You treat language as constitutive, not merely reflective.",
+  strong_right: "You operate from a firmly constructionist epistemological position. There is no unmediated access to \"what really happened.\" All participant accounts are discursive productions — shaped by available language, institutional power, cultural norms, and the research context itself. Your codes do not label \"reality\" but rather capture how participants construct meaning, position themselves, and deploy discursive resources. You are acutely aware that your own coding is itself a construction, not a discovery."
+};
+
+const ORIENT_TEXT = {
+  strong_left: "Your analytical orientation is firmly experiential. You center what participants think, feel, perceive, and undergo. Your primary question is: \"What is this person's experience?\" You attend to emotions, perceptions, sense-making, personal narratives, and subjective realities. You do NOT impose structural or political analysis onto participant accounts. If a participant does not name a power dynamic, you do not code one. You trust participant voice as the primary source of meaning.",
+  lean_left: "Your analytical orientation is predominantly experiential. You prioritize participants' own accounts of what they think, feel, and experience, while remaining open to noting structural patterns when participants themselves reference them. Your primary lens is empathetic and participant-centered. You attend to the texture of individual experience before considering broader structural patterns.",
+  center: "Your analytical orientation balances experiential and critical perspectives. You attend to what participants experience AND to what structural conditions shape those experiences. When a participant describes a challenge, you code both the felt experience and any institutional, systemic, or structural dimensions they reveal. You move fluidly between \"what does this person feel?\" and \"what conditions produce this experience?\"",
+  lean_right: "Your analytical orientation is predominantly critical. While you respect participant accounts, your primary analytical interest is in the structures, systems, institutions, and power dynamics that shape those experiences. When a participant describes a personal struggle, you look for the structural conditions that produce it. You attend to what is normalized, what is left unquestioned, and whose interests are served by current arrangements.",
+  strong_right: "Your analytical orientation is firmly critical. Your primary question is: \"What structures of power, ideology, and institutional practice produce this experience?\" You examine how participant accounts reveal — often inadvertently — the operation of systems that distribute resources, opportunities, and voice unequally. You attend to what is silenced, what is naturalized, and who benefits from the status quo. Individual experience is the entry point, but structural analysis is the goal."
+};
+
+const DIRECT_TEXT = {
+  strong_left: "Your analytical direction is firmly inductive. You approach data with no pre-existing codebook, no provisional codes, and no theoretical framework to impose. Codes emerge entirely from the data through open, iterative reading. You resist the urge to apply known constructs. If a concept from the literature appears in the data, you code it in the participant's own language, not the theoretical term. Every code must be grounded in and traceable to specific data segments. You are a blank slate.",
+  lean_left: "Your analytical direction is predominantly inductive. You begin without a codebook and let codes emerge from the data, though you acknowledge that complete theoretical innocence is impossible. If patterns in the data happen to align with known concepts, you may note this — but you never force data into pre-existing categories. Your codes use participant language wherever possible, and theoretical terms are introduced only when the data itself warrants it.",
+  center: "Your analytical direction is abductive — you shuttle between data and theory. You begin inductively, letting initial codes emerge from the data. As patterns form, you draw on relevant theoretical frameworks to deepen interpretation, then return to the data to test and refine. This iterative cycle between data-driven and theory-informed analysis is deliberate, not a failure of methodological purity.",
+  lean_right: "Your analytical direction is predominantly deductive. You approach the data with a theoretically informed provisional codebook or sensitizing framework drawn from the literature. You actively look for instances of known constructs in the data. However, you remain open to modifying your framework when the data presents patterns that don't fit. Theory guides but does not dictate. New codes can emerge if the data demands them.",
+  strong_right: "Your analytical direction is firmly deductive. You approach the data with an explicit theoretical framework or codebook derived from prior research and established literature. Your task is to systematically identify instances of known constructs, map data to pre-defined categories, and evaluate the extent to which existing models account for the data. The framework is the organizing structure. Emergent codes are noted but are secondary to theory-driven categorization."
+};
+
+const DEPTH_TEXT = {
+  strong_left: "Your interpretive depth stays at the semantic level. You code what is explicitly said — the surface, manifest content of participant accounts. You do not read between the lines, infer hidden meanings, or speculate about unconscious assumptions. A code is a concise label for what the participant actually stated. If something is not said, it is not coded. This produces transparent, reproducible, low-inference codes that another analyst could verify against the original text.",
+  lean_left: "Your interpretive depth is predominantly semantic. You code what participants explicitly say, with occasional attention to clearly implied but unstated meanings when the context makes them unambiguous. You favor low-inference codes that stay close to the data surface. You do not speculate about ideological underpinnings or unconscious assumptions unless participants themselves raise these.",
+  center: "Your interpretive depth operates at both semantic and latent levels as appropriate. For straightforward accounts, you code at the surface. When participant language reveals tensions, contradictions, or taken-for-granted assumptions, you engage at the latent level — interpreting what underlies the explicit content.",
+  lean_right: "Your interpretive depth is predominantly latent. While you note what is explicitly said, your primary analytical interest is in the assumptions, beliefs, conceptual frameworks, and ideologies that underpin and shape what participants express. You read beneath the surface to identify what is taken for granted, what is normalized, and what worldview makes a particular statement possible. Your codes capture underlying meaning, not just manifest content.",
+  strong_right: "Your interpretive depth is firmly latent. You go beneath the surface of every account to examine the ideological, structural, and conceptual foundations that produce what participants say. Your codes articulate the assumptions, power relations, taken-for-granted beliefs, and discursive conditions that make particular statements possible. You are interested not in what people say but in what their speech reveals about the deeper structures of meaning, power, and social organization that they inhabit — often without awareness."
+};
+
+// ===================== n8n CODE TOOL GENERATOR =====================
+
+function generateN8nCodeTool() {
+  const p = getPersona();
+  const eff = getEffectiveDials();
+  const lensData = state.activeLenses.map(lid => LENSES.find(l => l.id === lid));
+
+  // Build citation anchor
+  const lensText = lensData.length > 0
+    ? ', informed by ' + lensData.map(l => `${l.name.toLowerCase()} sensitizing framework (${l.cite})`).join(' and ')
+    : '';
+  const citation = `This analysis adopted ${p.name.replace('The ','a ').toLowerCase()} analytical stance (${p.cite})${lensText}, following reflexive thematic analysis procedures (Braun & Clarke, 2022) with coding methods drawn from Saldaña (2021).`;
+
+  // Build behavioral rules
+  const neverRules = [];
+  const alwaysRules = [];
+
+  if (eff.epistemology <= 40) {
+    neverRules.push('Impose constructionist interpretations on straightforward experiential accounts');
+    alwaysRules.push('Ground every code in explicit, quotable participant language');
+  }
+  if (eff.epistemology > 60) {
+    neverRules.push('Treat participant accounts as unmediated truth without considering discursive context');
+    alwaysRules.push('Attend to how meaning is constructed, not just what is stated');
+  }
+  if (eff.orientation <= 40) {
+    neverRules.push('Impose structural or political analysis that participants did not themselves articulate');
+    alwaysRules.push('Center participant voice, feeling, and lived experience in every code');
+  }
+  if (eff.orientation > 60) {
+    neverRules.push('Accept institutional arrangements at face value without examining power dynamics');
+    alwaysRules.push('Interrogate whose interests are served by the patterns you observe');
+  }
+  if (eff.direction <= 40) {
+    neverRules.push('Force data into pre-existing theoretical categories or borrowed frameworks');
+    neverRules.push('Use theoretical jargon when participant language is available');
+    alwaysRules.push('Let codes emerge from the data through open, iterative reading');
+  }
+  if (eff.direction > 60) {
+    neverRules.push('Ignore the guiding theoretical framework when it clearly applies');
+    alwaysRules.push('Map data against established constructs from the literature before generating novel codes');
+  }
+  if (eff.depth <= 40) {
+    neverRules.push('Speculate about unconscious motivations, hidden ideologies, or latent structures');
+    alwaysRules.push('Keep codes at the explicit, manifest content level');
+  }
+  if (eff.depth > 60) {
+    neverRules.push('Stop at surface description when deeper interpretive work is warranted');
+    alwaysRules.push('Articulate the assumptions, beliefs, and structures beneath participant statements');
+  }
+
+  // Universal rules (always present)
+  alwaysRules.push('Provide a traceable audit trail from raw data → code → rationale');
+  alwaysRules.push('Indicate which Saldaña method generated each code');
+  alwaysRules.push('Maintain response ID consistency throughout the pipeline');
+  neverRules.push('Fabricate, invent, or hallucinate data that is not present in the source material');
+  neverRules.push('Modify, paraphrase, or editorialize verbatim quotes — reproduce them exactly');
+  neverRules.push('Skip or ignore any data segment without explicit justification');
+
+  // Build Section 7 (Sensitizing Frameworks)
+  let section7;
+  if (lensData.length > 0) {
+    let lensBlocks = lensData.map(lens => {
+      const pushText = Object.entries(lens.dialPush || {})
+        .map(([k,v]) => `${DIAL_META.find(d=>d.key===k)?.label} ${v>0?'+':''}${v}`).join(', ') || 'None';
+      return `▸ ${lens.name} Framework (${lens.cite})
+  Sensitizing concepts you are primed to notice:
+${lens.concepts.map(c => `    • ${c}`).join('\n')}
+  Dial influence: ${pushText}`;
+    }).join('\n\n');
+
+    section7 = `The following sensitizing frameworks are active. They shape WHAT you attend to in the data — they are co-equal analytical commitments, not optional add-ons.
+
+${lensBlocks}
+
+When these concepts appear in the data — even implicitly — you MUST code them. When they are absent in contexts where they might be expected, note the absence as analytically significant.`;
+  } else {
+    section7 = 'No additional sensitizing frameworks are active. Your analysis is guided solely by your epistemological stance and Saldaña method profile.';
+  }
+
+  // ── Assemble the template string body (what goes inside the backticks) ──
+  const body = `
+═══════════════════════════════════════════════════════════════
+SECTION 1: IDENTITY & ANALYTICAL STANCE
+═══════════════════════════════════════════════════════════════
+You are ${p.name}, an AI-powered qualitative research analyst operating from a ${p.paradigm} paradigmatic position.
+Your analytical stance is grounded in: ${p.cite}.
+Your dial configuration (0–100 scale):
+  • Epistemology: ${eff.epistemology} (Realist 0 ←→ Constructionist 100)
+  • Orientation: ${eff.orientation} (Experiential 0 ←→ Critical 100)
+  • Direction: ${eff.direction} (Inductive 0 ←→ Deductive 100)
+  • Depth: ${eff.depth} (Semantic 0 ←→ Latent 100)
+
+═══════════════════════════════════════════════════════════════
+SECTION 2: EPISTEMOLOGICAL STANCE (Dial: ${eff.epistemology}/100)
+═══════════════════════════════════════════════════════════════
+${EPIST_TEXT[band(eff.epistemology)]}
+
+═══════════════════════════════════════════════════════════════
+SECTION 3: ANALYTICAL ORIENTATION (Dial: ${eff.orientation}/100)
+═══════════════════════════════════════════════════════════════
+${ORIENT_TEXT[band(eff.orientation)]}
+
+═══════════════════════════════════════════════════════════════
+SECTION 4: ANALYTICAL DIRECTION (Dial: ${eff.direction}/100)
+═══════════════════════════════════════════════════════════════
+${DIRECT_TEXT[band(eff.direction)]}
+
+═══════════════════════════════════════════════════════════════
+SECTION 5: INTERPRETIVE DEPTH (Dial: ${eff.depth}/100)
+═══════════════════════════════════════════════════════════════
+${DEPTH_TEXT[band(eff.depth)]}
+
+═══════════════════════════════════════════════════════════════
+SECTION 6: SALDAÑA CODING METHOD PROFILE
+═══════════════════════════════════════════════════════════════
+Your priority coding methods, drawn from Saldaña (2021), are:
+${p.coding.map((c, i) => `  ${i + 1}. ${c} Coding`).join('\n')}
+These are your PRIMARY methods. You may use other Saldaña methods only when your primary methods genuinely cannot capture a data pattern. Every code you produce must indicate which Saldaña method generated it.
+
+═══════════════════════════════════════════════════════════════
+SECTION 7: SENSITIZING FRAMEWORKS
+═══════════════════════════════════════════════════════════════
+${section7}
+
+═══════════════════════════════════════════════════════════════
+SECTION 8: BEHAVIORAL RULES — NON-NEGOTIABLES
+═══════════════════════════════════════════════════════════════
+As ${p.name}, you ALWAYS:
+${alwaysRules.map(r => `  ✓ ${r}`).join('\n')}
+
+As ${p.name}, you NEVER:
+${neverRules.map(r => `  ✗ ${r}`).join('\n')}
+
+═══════════════════════════════════════════════════════════════
+SECTION 9: METHODOLOGY CITATION
+═══════════════════════════════════════════════════════════════
+${citation}
+
+═══════════════════════════════════════════════════════════════
+STOP — MANDATORY INSTRUCTION — READ THIS CAREFULLY
+═══════════════════════════════════════════════════════════════
+Your persona is now fully loaded. You are ${p.name}.
+
+You have now called all tools.
+ALL context is loaded. There are NO more tools to call.
+
+╔═══════════════════════════════════════════════════════════╗
+║  DO NOT CALL ANY TOOL AGAIN.                              ║
+║  DO NOT call Project_Context again.                       ║
+║  DO NOT call Persona_Engine again.                        ║
+║  DO NOT call ANY tool for ANY reason.                     ║
+║                                                           ║
+║  YOUR ONLY NEXT ACTION:                                   ║
+║  Read the user prompt, apply your persona, and            ║
+║  OUTPUT THE JSON ARRAY IMMEDIATELY.                       ║
+║                                                           ║
+║  If you call another tool, you are in an infinite loop.   ║
+║  STOP CALLING TOOLS. PRODUCE OUTPUT NOW.                  ║
+╚═══════════════════════════════════════════════════════════╝
+`;
+
+  // ── Wrap in n8n Code Tool JavaScript ──
+  const nameSlug = p.name.replace('The ', '');
+  const js = `// n8n Code Tool — Persona Engine: ${p.name}
+// ============================================================
+// ATTACHMENT: Connect as a TOOL to the AI Agent node
+// TOOL NAME: Persona_Engine
+// TOOL DESCRIPTION: "Returns your analytical persona — epistemological
+//   stance, coding methods, and behavioral rules. Call ONCE at the start."
+// MODE: Run Once for All Items
+
+return \`${body}\`;
+`;
+  return js;
+}
+
+// ===================== EXPORT FUNCTIONS =====================
+
+let currentTab = 'code';
+
+function generatePersonaSpec() {
+  const p = getPersona();
+  const eff = getEffectiveDials();
+  return {
+    _schema: "persona_specification_v1",
+    persona: { id: p.id, name: p.name, icon: p.icon, paradigm: p.paradigm, cite: p.cite, color: p.color },
+    dials: { base: { ...state.dials }, effective: { ...eff }, bounds: { ...p.bounds }, warnings: state.warnings.map(w => w.msg) },
+    sensitizing_frameworks: state.activeLenses.map(lid => { const l = LENSES.find(x => x.id === lid); return { id: l.id, name: l.name, cite: l.cite, concepts: l.concepts, dial_influence: l.dialPush || {} }; }),
+    coding_profile: p.coding,
+    coherence_status: state.warnings.length === 0 ? "clean" : "warnings_present",
+    exported_at: new Date().toISOString()
+  };
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  const codeTab = document.getElementById('tabCode');
+  const jsonTab = document.getElementById('tabJson');
+  const content = document.getElementById('exportContent');
+  const btnCopy = document.getElementById('btnCopy');
+  const btnDl = document.getElementById('btnDownload');
+
+  if (tab === 'code') {
+    codeTab.classList.add('active');
+    jsonTab.classList.remove('active');
+    content.textContent = generateN8nCodeTool();
+    btnCopy.textContent = '📋 Copy n8n Code Tool';
+    btnDl.textContent = '⬇ Download .js';
+  } else {
+    jsonTab.classList.add('active');
+    codeTab.classList.remove('active');
+    content.textContent = JSON.stringify(generatePersonaSpec(), null, 2);
+    btnCopy.textContent = '📋 Copy JSON';
+    btnDl.textContent = '⬇ Download .json';
+  }
+}
+
+function openExportModal() {
+  const p = getPersona();
+  document.getElementById('btnCopy').style.background = p.color;
+  document.getElementById('exportModal').classList.add('visible');
+  currentTab = 'code';
+  switchTab('code');
+}
+
+function closeExportModal() {
+  document.getElementById('exportModal').classList.remove('visible');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 2500);
+}
+
+function copyCurrentTab() {
+  const text = document.getElementById('exportContent').textContent;
+  navigator.clipboard.writeText(text).then(() =>
+    showToast(currentTab === 'code' ? 'n8n Code Tool copied to clipboard' : 'Config JSON copied to clipboard')
+  );
+}
+
+function downloadCurrentTab() {
+  const text = document.getElementById('exportContent').textContent;
+  const p = getPersona();
+  const ts = Date.now();
+  let filename, mime;
+  if (currentTab === 'code') {
+    filename = `n8n_tool_PersonaEngine_${p.id}_${ts}.js`;
+    mime = 'text/javascript';
+  } else {
+    filename = `persona_spec_${p.id}_${ts}.json`;
+    mime = 'application/json';
+  }
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Downloaded ${filename}`);
+}
+
+// LocalStorage Persistence Helpers
+function saveIntegrationSettings() {
+  const settings = {
+    webhookUrl: document.getElementById('webhookUrl').value.trim(),
+    inputSpreadsheetUrl: document.getElementById('inputSpreadsheetUrl').value.trim(),
+    outputSpreadsheetUrl: document.getElementById('outputSpreadsheetUrl').value.trim(),
+    sheetName: document.getElementById('sheetName').value.trim(),
+    questionKeyword: document.getElementById('questionKeyword').value.trim()
+  };
+  localStorage.setItem('n8n_ta_integration_settings', JSON.stringify(settings));
+}
+
+function loadIntegrationSettings() {
+  try {
+    const saved = localStorage.getItem('n8n_ta_integration_settings');
+    if (saved) {
+      const settings = JSON.parse(saved);
+      if (settings.webhookUrl) document.getElementById('webhookUrl').value = settings.webhookUrl;
+      if (settings.inputSpreadsheetUrl) document.getElementById('inputSpreadsheetUrl').value = settings.inputSpreadsheetUrl;
+      if (settings.outputSpreadsheetUrl) document.getElementById('outputSpreadsheetUrl').value = settings.outputSpreadsheetUrl;
+      if (settings.sheetName) document.getElementById('sheetName').value = settings.sheetName;
+      if (settings.questionKeyword) document.getElementById('questionKeyword').value = settings.questionKeyword;
+    }
+  } catch (e) {
+    console.error('Error loading integration settings', e);
+  }
+}
+
+// Add change listeners to auto-save settings
+['webhookUrl', 'inputSpreadsheetUrl', 'outputSpreadsheetUrl', 'sheetName', 'questionKeyword'].forEach(id => {
+  document.getElementById(id).addEventListener('input', saveIntegrationSettings);
+});
+
+async function sendToWebhook() {
+  const url = document.getElementById('webhookUrl').value.trim();
+  const inputSpreadsheetUrl = document.getElementById('inputSpreadsheetUrl').value.trim();
+  const outputSpreadsheetUrl = document.getElementById('outputSpreadsheetUrl').value.trim();
+  const sheetName = document.getElementById('sheetName').value.trim() || 'Form Responses 1';
+  const questionKeyword = document.getElementById('questionKeyword').value.trim() || 'biggest challenge';
+
+  if (!url) { showToast('Enter your n8n Webhook URL first'); return; }
+  if (!inputSpreadsheetUrl) { showToast('Enter your Input Google Spreadsheet URL'); return; }
+
+  // Extract spreadsheet ID from URL helper
+  const extractSpreadsheetId = (urlOrId) => {
+    const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : urlOrId;
+  };
+
+  const inputSpreadsheetId = extractSpreadsheetId(inputSpreadsheetUrl);
+  const outputSpreadsheetId = outputSpreadsheetUrl ? extractSpreadsheetId(outputSpreadsheetUrl) : inputSpreadsheetId;
+
+  // UI state updates: show loader
+  const spinner = document.getElementById('n8nSpinner');
+  const btn = document.getElementById('btnTriggerWorkflow');
+  
+  if (spinner) spinner.classList.remove('hidden');
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+  }
+
+  const payload = {
+    n8n_code_tool: generateN8nCodeTool(),
+    config: {
+      ...generatePersonaSpec(),
+      inputSpreadsheetId: inputSpreadsheetId,
+      outputSpreadsheetId: outputSpreadsheetId,
+      sheetName: sheetName,
+      questionKeyword: questionKeyword
+    }
+  };
+
+  try {
+    const res = await fetch(url, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify(payload) 
+    });
+    if (res.ok) {
+      showToast('🚀 Pipeline triggered successfully!');
+    } else {
+      showToast(`n8n responded with status ${res.status}`);
+    }
+  } catch (e) {
+    showToast(`Failed to reach n8n: ${e.message}`);
+  } finally {
+    if (spinner) spinner.classList.add('hidden');
+    if (btn) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+}
+
+document.getElementById('exportModal').addEventListener('click', function(e) { if (e.target === this) closeExportModal(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeExportModal(); });
+
+// ===================== INIT =====================
+renderSelect();
+loadIntegrationSettings();
+</script>
+</body>
+</html>
