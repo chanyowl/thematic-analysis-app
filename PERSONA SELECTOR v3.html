@@ -874,9 +874,9 @@
             <div class="form-group">
               <label for="themesSheetName">
                 Final Themes Sheet Name
-                <span class="label-desc">Google Sheet tab where themes are output (e.g. "Final Themes")</span>
+                <span class="label-desc">(Optional - Leave blank to auto-discover correct tab name)</span>
               </label>
-              <input type="text" id="themesSheetName" value="Final Themes" placeholder="Final Themes">
+              <input type="text" id="themesSheetName" value="" placeholder="e.g. Final Themes (or leave blank to auto-discover)">
             </div>
           </div>
         </div>
@@ -1725,6 +1725,51 @@ async function fetchGoogleSheetRows(spreadsheetId, sheetName) {
   });
 }
 
+async function autoDiscoverThemes(spreadsheetId) {
+  const candidates = [
+    'A - Agent',
+    'B - Agent',
+    'C - Agent',
+    'IRR - Cosolidator',
+    '', // Default sheet (first tab)
+    'Final Themes',
+    'Sheet1',
+    'Themes',
+    'Phase 5',
+    'PHASE 5: Narrative Report'
+  ];
+  
+  let lastError = null;
+  
+  for (const name of candidates) {
+    try {
+      console.log(`Auto-discovering themes: trying tab name "${name || 'Default (First Tab)'}"`);
+      const rows = await fetchGoogleSheetRows(spreadsheetId, name);
+      if (rows && rows.length > 0) {
+        // Check if this sheet contains theme columns in the first row
+        const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+        const hasThemes = headers.some(h => h.includes('theme') && !h.includes('sub'));
+        const hasSubthemes = headers.some(h => h.includes('subtheme') || h.includes('sub-theme'));
+        const hasQuotes = headers.some(h => h.includes('quote') || h.includes('verbatim'));
+        
+        if (hasThemes || (hasSubthemes && hasQuotes)) {
+          console.log(`Auto-discovered themes sheet successfully: "${name || 'Default (First Tab)'}"`);
+          return { name: name || 'Default (First Tab)', rows };
+        }
+      }
+    } catch (e) {
+      lastError = e;
+      console.warn(`Failed tab candidate "${name || 'Default'}":`, e.message);
+    }
+  }
+  
+  if (lastError && lastError.message.includes("Access Denied")) {
+    throw lastError; // Propagate public share warnings
+  }
+  
+  throw new Error("No tab containing 'Theme' headers (like Themes, Sub-themes) could be found in this spreadsheet. Please make sure n8n has finished running and written themes to this spreadsheet.");
+}
+
 function parseGvizRows(rows) {
   if (!rows || rows.length === 0) return [];
   
@@ -1938,7 +1983,7 @@ function getStepActiveText(stepNum) {
 async function pollSheetData() {
   const inputUrl = document.getElementById('inputSpreadsheetUrl').value.trim();
   const outputUrl = document.getElementById('outputSpreadsheetUrl').value.trim() || inputUrl;
-  const themesSheetName = document.getElementById('themesSheetName').value.trim() || 'Final Themes';
+  const configuredThemesSheetName = document.getElementById('themesSheetName').value.trim();
   
   if (!outputUrl) {
     showToast('Spreadsheet URL not configured.');
@@ -1953,7 +1998,17 @@ async function pollSheetData() {
   const spreadsheetId = extractSpreadsheetId(outputUrl);
   
   try {
-    const rows = await fetchGoogleSheetRows(spreadsheetId, themesSheetName);
+    let rows = [];
+    let detectedSheetName = configuredThemesSheetName || 'Auto-Discovered';
+    
+    if (configuredThemesSheetName) {
+      rows = await fetchGoogleSheetRows(spreadsheetId, configuredThemesSheetName);
+    } else {
+      const discovery = await autoDiscoverThemes(spreadsheetId);
+      rows = discovery.rows;
+      detectedSheetName = discovery.name || 'Default';
+    }
+    
     if (rows && rows.length > 1) {
       setStepperState(6); // Light all green
       renderThemeCards(rows);
@@ -1965,7 +2020,7 @@ async function pollSheetData() {
       if (grid) {
         grid.innerHTML = `
           <div style="padding: 24px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 10px;">
-            <div style="margin-bottom: 8px;">⏳ Waiting for analysis pipeline to write themes to sheet tab "${themesSheetName}"...</div>
+            <div style="margin-bottom: 8px;">⏳ Waiting for analysis pipeline to write themes to sheet tab "${detectedSheetName}"...</div>
             <div style="font-size: 11px; opacity: 0.7;">Make sure n8n executes the final narrative module successfully.</div>
           </div>
         `;
@@ -1983,7 +2038,7 @@ async function pollSheetData() {
           <div style="font-weight: 600; color: var(--danger); margin-bottom: 8px; font-size: 14px;">⚠️ Connection Error</div>
           <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">${error.message}</div>
           <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
-            💡 <strong>Action Required:</strong> Check if your spreadsheet is shared as <em>"Anyone with the link can view"</em>. Also verify that your tab name in settings matches the exact sheet name (e.g. "Final Themes").
+            💡 <strong>Action Required:</strong> Check if your spreadsheet is shared as <em>"Anyone with the link can view"</em>. If you configured a specific tab name, verify it matches exactly.
           </div>
         </div>
       `;
