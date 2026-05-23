@@ -2002,7 +2002,15 @@ async function pollSheetData() {
     let detectedSheetName = configuredThemesSheetName || 'Auto-Discovered';
     
     if (configuredThemesSheetName) {
-      rows = await fetchGoogleSheetRows(spreadsheetId, configuredThemesSheetName);
+      try {
+        rows = await fetchGoogleSheetRows(spreadsheetId, configuredThemesSheetName);
+        detectedSheetName = configuredThemesSheetName;
+      } catch (err) {
+        console.warn(`Configured tab "${configuredThemesSheetName}" failed. Falling back to auto-discovery.`, err);
+        const discovery = await autoDiscoverThemes(spreadsheetId);
+        rows = discovery.rows;
+        detectedSheetName = discovery.name || 'Default';
+      }
     } else {
       const discovery = await autoDiscoverThemes(spreadsheetId);
       rows = discovery.rows;
