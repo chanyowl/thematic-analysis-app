@@ -408,6 +408,44 @@
   }
   .toast.visible { transform: translateX(-50%) translateY(0); }
   .toast__icon { margin-right: 8px; }
+
+  /* Fullscreen Button */
+  .fullscreen-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 42px;
+    height: 42px;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+  .fullscreen-btn:hover {
+    background: rgba(17, 24, 39, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  }
+  .fullscreen-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 </style>
 </head>
 <body>
@@ -1308,6 +1346,66 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close
 // ===================== INIT =====================
 renderSelect();
 loadIntegrationSettings();
+
+// ===================== FULLSCREEN BUTTON =====================
+const btnFullscreen = document.getElementById('btnFullscreen');
+const fullscreenIcon = document.getElementById('fullscreenIcon');
+
+const ENTER_FULLSCREEN_PATH = '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>';
+const EXIT_FULLSCREEN_PATH = '<path d="M4 14h4v4m0-4l-4 4m16-4h-4v4m0-4l4 4M4 10h4V6m0 4L4 6m16 4h-4V6m0 4l4-4"></path>';
+
+function updateFullscreenIcon() {
+  const isFullscreen = document.fullscreenElement || 
+                       document.webkitFullscreenElement || 
+                       document.mozFullScreenElement || 
+                       document.msFullscreenElement;
+  if (fullscreenIcon) {
+    fullscreenIcon.innerHTML = isFullscreen ? EXIT_FULLSCREEN_PATH : ENTER_FULLSCREEN_PATH;
+  }
+}
+
+if (btnFullscreen) {
+  btnFullscreen.addEventListener('click', () => {
+    if (!document.fullscreenElement && 
+        !document.webkitFullscreenElement && 
+        !document.mozFullScreenElement && 
+        !document.msFullscreenElement) {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+    }
+  });
+}
+
+document.addEventListener('fullscreenchange', updateFullscreenIcon);
+document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
 </script>
+
+<!-- Fullscreen Button -->
+<button class="fullscreen-btn" id="btnFullscreen" title="Toggle Fullscreen">
+  <svg viewBox="0 0 24 24" id="fullscreenIcon">
+    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+  </svg>
+</button>
+
 </body>
 </html>
