@@ -1869,7 +1869,18 @@ function savePhaseState() {
 function loadPhaseState() {
   try {
     const saved = localStorage.getItem('n8n_ta_phase_state');
-    if (saved) phaseState = JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed) {
+        if (!parsed.statuses) parsed.statuses = {};
+        if (!parsed.outputs) parsed.outputs = {};
+        for (let i = 1; i <= 6; i++) {
+          if (!parsed.statuses[i]) parsed.statuses[i] = 'pending';
+          if (parsed.outputs[i] === undefined) parsed.outputs[i] = null;
+        }
+        phaseState = parsed;
+      }
+    }
   } catch(e) { console.error('Error loading phase state', e); }
 }
 
