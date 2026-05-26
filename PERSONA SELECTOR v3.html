@@ -1904,11 +1904,15 @@ function switchAppTab(tabName) {
   
   if (tabName === 'dashboard') {
     renderPhaseCards();
-    const p = PERSONAS.find(x => x.id === currentPersonaId);
+    const p = PERSONAS.find(x => x.id === state.selectedId);
     if (p) {
       document.getElementById('dashIcon').innerText = p.icon;
       document.getElementById('dashName').innerText = `${p.name} · Analysis Dashboard`;
       document.getElementById('dashParadigm').innerText = `Active Paradigm: ${p.paradigm}`;
+    } else {
+      document.getElementById('dashIcon').innerText = '📊';
+      document.getElementById('dashName').innerText = 'Thematic Analysis Dashboard';
+      document.getElementById('dashParadigm').innerText = 'Select a persona to calibrate paradigm';
     }
     
     // Auto-render final themes if phase 5 is ready/approved
