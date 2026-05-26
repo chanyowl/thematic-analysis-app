@@ -1998,12 +1998,16 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
   const payload = {
     phase: `n8n_PHASE${phaseNum}`,
     persona_prompt: promptText || document.getElementById('promptTextarea').value.trim(),
+    research_question: state.researchQuestion || '',
+    project_context: state.projectContext || '',
     config: {
       ...generatePersonaSpec(),
       inputSpreadsheetId: BACKEND_CONFIG.phaseSpreadsheets[phaseNum],
       outputSpreadsheetId: BACKEND_CONFIG.phaseSpreadsheets[phaseNum],
       sheetName: BACKEND_CONFIG.sheetName,
-      questionKeyword: BACKEND_CONFIG.questionKeyword
+      questionKeyword: BACKEND_CONFIG.questionKeyword,
+      researchQuestion: state.researchQuestion || '',
+      projectContext: state.projectContext || ''
     }
   };
 
