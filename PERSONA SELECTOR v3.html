@@ -1842,25 +1842,23 @@ const BACKEND_CONFIG = {
     2: '1SnHrsnz00vDBqjNvmEydo176FjKU5ZYji3KXOmBjjSc',
     3: '1126H_UiwUCAsGW0xk3tPqDYPUY7NgKQsbTohJEP6afI',
     4: '1_Gw3oO6xhTUfOOjDus5myHG04_5srb4PB5se6wxXmyQ',
-    5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
-    6: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
+    5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
   }
 };
 
 // ===================== PHASE STATE =====================
 const PHASES = [
-  { num: 1, name: 'Phase 1: Familiarization with the Data', desc: 'Read and re-read dataset, casual initial notes, and screening.' },
-  { num: 2, name: 'Phase 2: Generating Initial Codes', desc: 'Methodically assign meaningful labels; capture semantic & latent codes.' },
-  { num: 3, name: 'Phase 3: Generating Initial Themes', desc: 'Cluster related codes together; construct shared central organizing concepts.' },
-  { num: 4, name: 'Phase 4: Reviewing Themes', desc: 'Check candidate themes against extracts and the entire dataset.' },
-  { num: 5, name: 'Phase 5: Defining and Naming Themes', desc: 'Formulate detailed definitions and select punchy, cohesive titles.' },
-  { num: 6, name: 'Phase 6: Writing the Report', desc: 'Weave a compelling narrative answering the research question with verbatim quotes.' }
+  { num: 1, name: 'Phase 1: Validity Screening', desc: 'Screen responses for substantive, analyzable content addressing the research question.' },
+  { num: 2, name: 'Phase 2: Initial Coding', desc: 'Methodically assign analytical codes to validated responses, anchoring them to verbatim quotes.' },
+  { num: 3, name: 'Phase 3: Code Compression', desc: 'Pool and cluster initial codes across all respondents to merge duplicate concepts.' },
+  { num: 4, name: 'Phase 4: Theme Development', desc: 'Group compressed codes into candidate themes based on shared underlying patterns of meaning.' },
+  { num: 5, name: 'Phase 5: Theme Definition & Sub-themes', desc: 'Formulate detailed scope definitions, identify sub-themes, and compile the qualitative narrative report.' }
 ];
 
 let phaseState = {
   currentPhase: 0,
-  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending', 6: 'pending' },
-  outputs: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null }
+  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' },
+  outputs: { 1: null, 2: null, 3: null, 4: null, 5: null }
 };
 
 function savePhaseState() {
@@ -1874,7 +1872,7 @@ function loadPhaseState() {
       if (parsed) {
         if (!parsed.statuses) parsed.statuses = {};
         if (!parsed.outputs) parsed.outputs = {};
-        for (let i = 1; i <= 6; i++) {
+        for (let i = 1; i <= 5; i++) {
           if (!parsed.statuses[i]) parsed.statuses[i] = 'pending';
           if (parsed.outputs[i] === undefined) parsed.outputs[i] = null;
         }
@@ -1928,9 +1926,9 @@ function switchAppTab(tabName) {
       document.getElementById('dashParadigm').innerText = 'Select a persona to calibrate paradigm';
     }
     
-    // Auto-render final themes if phase 5 or 6 is ready/approved
-    const hasFinalData = (phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved' || phaseState.statuses[6] === 'ready' || phaseState.statuses[6] === 'approved');
-    const finalOutput = phaseState.outputs[5] || phaseState.outputs[6];
+    // Auto-render final themes if phase 5 is ready/approved
+    const hasFinalData = (phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved');
+    const finalOutput = phaseState.outputs[5];
     if (hasFinalData && finalOutput) {
       renderThemeCards(finalOutput);
       document.getElementById('resultsCard').classList.remove('hidden');
@@ -1964,7 +1962,7 @@ function startDashboardPolling() {
           renderPhaseCards();
           showToast(`🎉 Phase ${pNum} output is ready for review!`);
           
-          if (pNum === 5 || pNum === 6) {
+          if (pNum === 5) {
             renderThemeCards(rows);
             document.getElementById('resultsCard').classList.remove('hidden');
           }
@@ -2053,7 +2051,7 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
 async function approveAndProceed(completedPhase) {
   phaseState.statuses[completedPhase] = 'approved';
   const nextPhase = completedPhase + 1;
-  if (nextPhase <= 6) {
+  if (nextPhase <= 5) {
     phaseState.currentPhase = nextPhase;
     phaseState.statuses[nextPhase] = 'processing';
     savePhaseState();
@@ -2061,7 +2059,7 @@ async function approveAndProceed(completedPhase) {
     updatePhaseBadge();
     await sendPhaseToWebhook(nextPhase);
   } else {
-    phaseState.currentPhase = 6;
+    phaseState.currentPhase = 5;
     savePhaseState();
     renderPhaseCards();
     showToast('🎉 All phases complete! Final report is ready.');
@@ -2203,7 +2201,7 @@ function renderPhase4Output(rows) {
   return html;
 }
 
-function renderPhase6Output(rows) {
+function renderPhase5Output(rows) {
   if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No narrative report data found.</div>';
   const parsed = parseGvizRows(rows);
   if (parsed.length === 0) return '<div style="color:var(--text-dim);">No parsed themes available for reporting.</div>';
@@ -2213,7 +2211,7 @@ function renderPhase6Output(rows) {
   let html = `
     <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 12px; padding: 24px; color: var(--text-primary); line-height: 1.6; font-size: 14px;">
       <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--accent-blue); display: flex; align-items: center; gap: 8px;">
-        📝 Phase 6: Qualitative Narrative Findings
+        📝 Phase 5: Qualitative Narrative Findings
       </h3>
       <p style="margin-bottom: 20px; font-style: italic; color: var(--text-secondary); background: rgba(255,255,255,0.02); padding: 12px; border-left: 3px solid var(--accent-blue); border-radius: 4px;">
         This findings narrative has been woven together to address your core research question: <strong>"${rq}"</strong>.
@@ -2318,15 +2316,7 @@ function getPhaseOutputHTML(phaseNum) {
     if (phaseNum === 2) return renderPhase2Output(outputData);
     if (phaseNum === 3) return renderPhase3Output(outputData);
     if (phaseNum === 4) return renderPhase4Output(outputData);
-    if (phaseNum === 5) {
-      return `
-        <div style="color:#10B981; margin-bottom:12px;">✅ Phase 5 complete! Themes are defined and named.</div>
-        <div style="font-size:12px; color:var(--text-muted);">
-          Total Themes defined: <strong>${parseGvizRows(outputData).length}</strong>
-        </div>
-      `;
-    }
-    if (phaseNum === 6) return renderPhase6Output(outputData);
+    if (phaseNum === 5) return renderPhase5Output(outputData);
   } catch(e) {
     return `<div style="color:var(--text-dim);">Error rendering output data: ${e.message}</div>`;
   }
@@ -2361,7 +2351,7 @@ function renderPhaseCards() {
         <div class="phase-card__output" id="phaseOutput_${phase.num}">
           ${getPhaseOutputHTML(phase.num)}
         </div>
-        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 6 ? phase.num + 1 : '— Complete'}</button>` : ''}
+        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
       </div>
     `;
 
@@ -2448,9 +2438,7 @@ async function autoDiscoverThemes(spreadsheetId) {
     'Phase 5',
     'PHASE 5: Narrative Report',
     'PHASE 5: Defining and Naming Themes',
-    'Defining and Naming Themes',
-    'Phase 6',
-    'PHASE 6: Narrative Report'
+    'Defining and Naming Themes'
   ];
   
   let lastError = null;
@@ -2792,7 +2780,7 @@ function renderAuditTrail(trailString) {
 }
 
 function setStepperState(currentStepIndex) {
-  const steps = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
+  const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
   steps.forEach((stepId, index) => {
     const stepEl = document.getElementById(stepId);
     if (!stepEl) return;
@@ -2814,12 +2802,11 @@ function setStepperState(currentStepIndex) {
 
 function getStepActiveText(stepNum) {
   switch (stepNum) {
-    case 1: return 'Familiarization active...';
+    case 1: return 'Validity screening active...';
     case 2: return 'Generating initial codes...';
-    case 3: return 'Synthesizing candidate themes...';
-    case 4: return 'Refining themes against data...';
+    case 3: return 'Compressing codes...';
+    case 4: return 'Developing candidate themes...';
     case 5: return 'Defining and naming themes...';
-    case 6: return 'Writing final report...';
     default: return 'Processing...';
   }
 }
@@ -2862,7 +2849,7 @@ async function pollSheetData() {
     }
     
     if (rows && rows.length > 1) {
-      setStepperState(6); // Light all green
+      setStepperState(5); // Light all green
       renderThemeCards(rows);
       document.getElementById('resultsCard').classList.remove('hidden');
     } else {
