@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+window.onerror = function(message, source, lineno, colno, error) {
+    var errData = {
+        type: 'error',
+        message: message,
+        source: source,
+        line: lineno,
+        col: colno,
+        stack: error ? error.stack : ''
+    };
+    fetch('http://localhost:8000/log-error', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(errData)
+    });
+    return false;
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+    var errData = {
+        type: 'promise_rejection',
+        message: event.reason ? event.reason.message : 'Unknown rejection',
+        stack: event.reason ? event.reason.stack : ''
+    };
+    fetch('http://localhost:8000/log-error', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(errData)
+    });
+});
+
+console.log("Error tracking script initialized!");
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Analytical Persona Selector — n8n Code Tool Generator</title>
@@ -1753,7 +1787,7 @@ Your dial configuration (0–100 scale):
   • Orientation: ${eff.orientation} (Experiential 0 ←→ Critical 100)
   • Direction: ${eff.direction} (Inductive 0 ←→ Deductive 100)
   • Depth: ${eff.depth} (Semantic 0 ←→ Latent 100)
-${contextSection}
+${contextSection}`;
 ═══════════════════════════════════════════════════════════════
 SECTION 2: EPISTEMOLOGICAL STANCE (Dial: ${eff.epistemology}/100)
 ═══════════════════════════════════════════════════════════════
