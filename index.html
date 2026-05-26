@@ -1848,11 +1848,11 @@ const BACKEND_CONFIG = {
 
 // ===================== PHASE STATE =====================
 const PHASES = [
-  { num: 1, name: 'Phase 1: Validity Screening', desc: 'Screen responses for substantive, analyzable content addressing the research question.' },
-  { num: 2, name: 'Phase 2: Initial Coding', desc: 'Methodically assign analytical codes to validated responses, anchoring them to verbatim quotes.' },
-  { num: 3, name: 'Phase 3: Code Compression', desc: 'Pool and cluster initial codes across all respondents to merge duplicate concepts.' },
-  { num: 4, name: 'Phase 4: Theme Development', desc: 'Group compressed codes into candidate themes based on shared underlying patterns of meaning.' },
-  { num: 5, name: 'Phase 5: Theme Definition & Sub-themes', desc: 'Formulate detailed scope definitions, identify sub-themes, and compile the qualitative narrative report.' }
+  { num: 1, name: 'Phase 1: Familiarization with the Data', desc: 'Screen responses for validity and read/re-read the dataset to gain initial insights.' },
+  { num: 2, name: 'Phase 2: Generating Initial Codes', desc: 'Methodically assign analytical codes to validated responses, anchoring them to verbatim quotes.' },
+  { num: 3, name: 'Phase 3: Generating Initial Themes', desc: 'Pool and cluster initial codes across all respondents to merge duplicate concepts.' },
+  { num: 4, name: 'Phase 4: Reviewing Themes', desc: 'Group compressed codes into candidate themes based on shared underlying patterns of meaning.' },
+  { num: 5, name: 'Phase 5: Defining and Naming Themes', desc: 'Formulate detailed scope definitions, identify sub-themes, and compile the qualitative narrative report.' }
 ];
 
 let phaseState = {
@@ -2802,10 +2802,10 @@ function setStepperState(currentStepIndex) {
 
 function getStepActiveText(stepNum) {
   switch (stepNum) {
-    case 1: return 'Validity screening active...';
+    case 1: return 'Familiarization active...';
     case 2: return 'Generating initial codes...';
-    case 3: return 'Compressing codes...';
-    case 4: return 'Developing candidate themes...';
+    case 3: return 'Generating initial themes...';
+    case 4: return 'Reviewing themes...';
     case 5: return 'Defining and naming themes...';
     default: return 'Processing...';
   }
