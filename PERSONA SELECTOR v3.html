@@ -1712,9 +1712,15 @@ function generatePersonaPrompt() {
 const BACKEND_CONFIG = {
   webhookUrl: 'https://n8n-perote.onrender.com/webhook/n8n-perote',
   inputSpreadsheetId: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
-  outputSpreadsheetId: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
   sheetName: 'Form Responses 1',
-  questionKeyword: 'biggest challenge'
+  questionKeyword: 'biggest challenge',
+  phaseSpreadsheets: {
+    1: '1Nyv8aWtK_KHX0sS9lcDTNA7orT-oddsorJX3Cic7vx8',
+    2: '1SnHrsnz00vDBqjNvmEydo176FjKU5ZYji3KXOmBjjSc',
+    3: '1126H_UiwUCAsGW0xk3tPqDYPUY7NgKQsbTohJEP6afI',
+    4: '1_Gw3oO6xhTUfOOjDus5myHG04_5srb4PB5se6wxXmyQ',
+    5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
+  }
 };
 
 // ===================== PHASE STATE =====================
@@ -1728,7 +1734,8 @@ const PHASES = [
 
 let phaseState = {
   currentPhase: 0,
-  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' }
+  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' },
+  outputs: { 1: null, 2: null, 3: null, 4: null, 5: null }
 };
 
 function savePhaseState() {
@@ -1777,7 +1784,51 @@ function switchAppTab(tabName) {
       document.getElementById('dashName').innerText = `${p.name} · Analysis Dashboard`;
       document.getElementById('dashParadigm').innerText = `Active Paradigm: ${p.paradigm}`;
     }
+    
+    // Auto-render final themes if phase 5 is ready/approved
+    if ((phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved') && phaseState.outputs[5]) {
+      renderThemeCards(phaseState.outputs[5]);
+      document.getElementById('resultsCard').classList.remove('hidden');
+    } else {
+      document.getElementById('resultsCard').classList.add('hidden');
+    }
+    
+    startDashboardPolling();
+  } else {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
   }
+}
+
+function startDashboardPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(async () => {
+    // Find the active processing phase
+    const activeProcessing = Object.keys(phaseState.statuses).find(num => phaseState.statuses[num] === 'processing');
+    if (activeProcessing) {
+      const pNum = parseInt(activeProcessing);
+      console.log(`Auto-polling data for Phase ${pNum}...`);
+      try {
+        const rows = await fetchPhaseRows(pNum);
+        if (rows && rows.length > 1) {
+          phaseState.statuses[pNum] = 'ready';
+          phaseState.outputs[pNum] = rows;
+          savePhaseState();
+          renderPhaseCards();
+          showToast(`🎉 Phase ${pNum} output is ready for review!`);
+          
+          if (pNum === 5) {
+            renderThemeCards(rows);
+            document.getElementById('resultsCard').classList.remove('hidden');
+          }
+        }
+      } catch(e) {
+        console.warn(`Polling error for Phase ${pNum}:`, e.message);
+      }
+    }
+  }, 8000);
 }
 
 function updatePhaseBadge() {
@@ -1819,8 +1870,8 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
     persona_prompt: promptText || document.getElementById('promptTextarea').value.trim(),
     config: {
       ...generatePersonaSpec(),
-      inputSpreadsheetId: BACKEND_CONFIG.inputSpreadsheetId,
-      outputSpreadsheetId: BACKEND_CONFIG.outputSpreadsheetId,
+      inputSpreadsheetId: BACKEND_CONFIG.phaseSpreadsheets[phaseNum],
+      outputSpreadsheetId: BACKEND_CONFIG.phaseSpreadsheets[phaseNum],
       sheetName: BACKEND_CONFIG.sheetName,
       questionKeyword: BACKEND_CONFIG.questionKeyword
     }
@@ -1868,6 +1919,204 @@ async function approveAndProceed(completedPhase) {
   }
 }
 
+// ===================== PHASE OUTPUT RENDERERS =====================
+function renderPhase1Output(rows) {
+  if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No screened responses found.</div>';
+  const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+  const emailIdx = headers.findIndex(h => h.includes('email'));
+  const answerIdx = headers.findIndex(h => h.includes('answer'));
+  const verdictIdx = headers.findIndex(h => h.includes('verdict'));
+  const explanationIdx = headers.findIndex(h => h.includes('explanation') || h.includes('desc') || h.includes('rationale'));
+
+  let html = `<div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">`;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const email = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const answer = (answerIdx !== -1 && answerIdx < row.length) ? row[answerIdx] : '';
+    const verdict = (verdictIdx !== -1 && verdictIdx < row.length && row[verdictIdx]) ? row[verdictIdx].toString().trim().toUpperCase() : 'VALID';
+    const explanation = (explanationIdx !== -1 && explanationIdx < row.length) ? row[explanationIdx] : '';
+
+    const isVal = verdict === 'VALID';
+    const badgeColor = isVal ? '#10B981' : '#EF4444';
+    const badgeBg = isVal ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
+    html += `
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <span style="font-size:12px; font-weight:600; color:var(--text-muted);">${email}</span>
+          <span style="font-size:10px; font-weight:700; color:${badgeColor}; background:${badgeBg}; padding:2px 8px; border-radius:4px;">${verdict}</span>
+        </div>
+        <div style="font-size:13px; color:var(--text-primary); margin-bottom: 8px; font-style:italic;">"${answer}"</div>
+        ${explanation ? `<div style="font-size:11px; color:var(--text-dim); border-top:1px solid rgba(255,255,255,0.04); padding-top:8px; margin-top:8px;"><strong>Screening Reason:</strong> ${explanation}</div>` : ''}
+      </div>
+    `;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderPhase2Output(rows) {
+  if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No initial codes generated.</div>';
+  const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+  const emailIdx = headers.findIndex(h => h.includes('email'));
+  const codeIdx = headers.findIndex(h => h.includes('code'));
+  const expIdx = headers.findIndex(h => h.includes('explanation') || h.includes('desc') || h.includes('rationale'));
+  const quoteIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim'));
+
+  let html = `<div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">`;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const email = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const code = (codeIdx !== -1 && codeIdx < row.length) ? row[codeIdx] : 'Uncoded';
+    const explanation = (expIdx !== -1 && expIdx < row.length) ? row[expIdx] : '';
+    const quote = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
+
+    html += `
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <span style="font-size:11px; font-family:'IBM Plex Mono', monospace; font-weight:600; color:var(--accent-blue); background:rgba(96,165,250,0.1); padding:2px 8px; border-radius:4px;">${code}</span>
+          <span style="font-size:11px; color:var(--text-dim);">${email}</span>
+        </div>
+        ${quote ? `<div style="font-size:13px; color:var(--text-secondary); margin-bottom: 8px; font-style:italic; border-left: 2px solid var(--accent-blue); padding-left: 10px;">"${quote}"</div>` : ''}
+        ${explanation ? `<div style="font-size:11px; color:var(--text-dim);"><strong>Rationale:</strong> ${explanation}</div>` : ''}
+      </div>
+    `;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderPhase3Output(rows) {
+  if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No theme groupings generated.</div>';
+  const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+  const labelIdx = headers.findIndex(h => h.includes('label') || h.includes('code') && !h.includes('initial') && !h.includes('trail'));
+  const rationalIdx = headers.findIndex(h => h.includes('rational') || h.includes('explanation') || h.includes('desc'));
+  const initialIdx = headers.findIndex(h => h.includes('initial') || h.includes('trail') || h.includes('source') || h.includes('code'));
+  const quoteIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim'));
+
+  let html = `<div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">`;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const label = (labelIdx !== -1 && labelIdx < row.length) ? row[labelIdx] : '';
+    const rationale = (rationalIdx !== -1 && rationalIdx < row.length) ? row[rationalIdx] : '';
+    const initialCodes = (initialIdx !== -1 && initialIdx < row.length) ? row[initialIdx] : '';
+    const quotes = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
+
+    html += `
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+        <div style="font-size:14px; font-weight:700; color:var(--accent-purple); margin-bottom: 8px;">${label}</div>
+        ${rationale ? `<div style="font-size:12px; color:var(--text-secondary); margin-bottom: 8px;"><strong>Compression Rationale:</strong> ${rationale}</div>` : ''}
+        
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.04); padding-top:8px;">
+          ${initialCodes ? `<div style="font-size:11px; color:var(--text-muted);"><strong>Initial Codes:</strong> <span style="font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--accent-blue);">${initialCodes}</span></div>` : ''}
+          ${quotes ? `<div style="font-size:11px; color:var(--text-dim); font-style:italic;"><strong>Evidence:</strong> "${quotes}"</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderPhase4Output(rows) {
+  if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No reviewed themes found.</div>';
+  const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
+  const labelIdx = headers.findIndex(h => h.includes('label') || h.includes('theme') && !h.includes('rationale') && !h.includes('ratinale'));
+  const rationalIdx = headers.findIndex(h => h.includes('rational') || h.includes('ratinale') || h.includes('explanation'));
+  const trailIdx = headers.findIndex(h => h.includes('trail') || h.includes('code') || h.includes('method'));
+  const quoteIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim'));
+
+  let html = `<div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">`;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length === 0) continue;
+    const label = (labelIdx !== -1 && labelIdx < row.length) ? row[labelIdx] : '';
+    const rationale = (rationalIdx !== -1 && rationalIdx < row.length) ? row[rationalIdx] : '';
+    const trail = (trailIdx !== -1 && trailIdx < row.length) ? row[trailIdx] : '';
+    const quotes = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
+
+    html += `
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
+        <div style="font-size:15px; font-weight:700; color:var(--accent-pink); margin-bottom: 8px;">${label}</div>
+        ${rationale ? `<div style="font-size:12px; color:var(--text-secondary); margin-bottom: 8px;"><strong>Theme Rationale:</strong> ${rationale}</div>` : ''}
+        
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.04); padding-top:8px;">
+          ${trail ? `<div style="font-size:11px; color:var(--text-muted);"><strong>Coding Trail:</strong> <span style="font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--accent-purple);">${trail}</span></div>` : ''}
+          ${quotes ? `<div style="font-size:11px; color:var(--text-dim); font-style:italic;"><strong>Evidence:</strong> "${quotes}"</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+  return html;
+}
+
+async function fetchPhaseRows(phaseNum) {
+  const spreadsheetId = BACKEND_CONFIG.phaseSpreadsheets[phaseNum];
+  if (!spreadsheetId) throw new Error("No spreadsheet configured for this phase");
+  
+  // Try candidates or first tab
+  const candidates = ['', 'Sheet1', 'A - Agent', 'B - Agent', 'C - Agent', 'IRR - Cosolidator', 'Final Themes', 'Themes'];
+  let lastError = null;
+  
+  for (const name of candidates) {
+    try {
+      const rows = await fetchGoogleSheetRows(spreadsheetId, name);
+      if (rows && rows.length > 1) {
+        return rows;
+      }
+    } catch(e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error(`No data rows found in spreadsheet for Phase ${phaseNum}`);
+}
+
+function getPhaseOutputHTML(phaseNum) {
+  const status = phaseState.statuses[phaseNum];
+  const outputData = phaseState.outputs[phaseNum];
+  
+  if (status === 'pending') {
+    return `<div style="text-align:center; color:var(--text-dim); padding: 12px 0;">Waiting for previous phases to complete.</div>`;
+  }
+  if (status === 'processing') {
+    return `
+      <div style="text-align:center; color:var(--accent-blue); padding: 12px 0;">
+        ⏳ Backend is processing this phase. Results will appear here when ready.<br><br>
+        <button class="btn-refresh-sheet" onclick="pollPhaseData(${phaseNum})">🔄 Check for Results</button>
+      </div>
+    `;
+  }
+  
+  if (!outputData || outputData.length === 0) {
+    return `
+      <div style="text-align:center; color:var(--warning); padding: 12px 0;">No local data cached for this phase.</div>
+      <button class="btn-refresh-sheet" style="margin: 10px auto 0;" onclick="pollPhaseData(${phaseNum})">🔄 Poll Spreadsheet</button>
+    `;
+  }
+  
+  try {
+    if (phaseNum === 1) return renderPhase1Output(outputData);
+    if (phaseNum === 2) return renderPhase2Output(outputData);
+    if (phaseNum === 3) return renderPhase3Output(outputData);
+    if (phaseNum === 4) return renderPhase4Output(outputData);
+    if (phaseNum === 5) {
+      return `
+        <div style="color:#10B981; margin-bottom:12px;">✅ Phase 5 complete! Structured narrative and theme cards are rendered below.</div>
+        <div style="font-size:12px; color:var(--text-muted);">
+          Total Themes detected: <strong>${parseGvizRows(outputData).length}</strong>
+        </div>
+      `;
+    }
+  } catch(e) {
+    return `<div style="color:var(--text-dim);">Error rendering output data: ${e.message}</div>`;
+  }
+  return '';
+}
+
 // ===================== PHASE CARDS RENDERER =====================
 function renderPhaseCards() {
   const container = document.getElementById('phaseCardsContainer');
@@ -1894,10 +2143,7 @@ function renderPhaseCards() {
       </div>
       <div class="phase-card__body" id="phaseBody_${phase.num}">
         <div class="phase-card__output" id="phaseOutput_${phase.num}">
-          ${status === 'pending' ? '<div style="text-align:center; color:var(--text-dim);">Waiting for previous phases to complete.</div>' : ''}
-          ${status === 'processing' ? '<div style="text-align:center; color:var(--accent-blue);">⏳ Backend is processing this phase. Results will appear here when ready.<br><br><button class="btn-refresh-sheet" onclick="pollPhaseData('+phase.num+')">🔄 Check for Results</button></div>' : ''}
-          ${status === 'ready' ? '<div style="color:var(--text-muted);">Output loaded. Review below and approve to continue.</div>' : ''}
-          ${status === 'approved' ? '<div style="color:#10B981;">✅ This phase has been reviewed and approved.</div>' : ''}
+          ${getPhaseOutputHTML(phase.num)}
         </div>
         ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
       </div>
@@ -1918,18 +2164,17 @@ function togglePhaseBody(num) {
 }
 
 async function pollPhaseData(phaseNum) {
-  // For now, mark as ready when user manually checks
-  // This will be enhanced when the Google Sheet link is provided
   try {
-    const rows = await autoDiscoverThemes(BACKEND_CONFIG.outputSpreadsheetId);
-    if (rows && rows.rows && rows.rows.length > 1) {
+    const rows = await fetchPhaseRows(phaseNum);
+    if (rows && rows.length > 1) {
       phaseState.statuses[phaseNum] = 'ready';
+      phaseState.outputs[phaseNum] = rows;
       savePhaseState();
       renderPhaseCards();
       showToast(`Phase ${phaseNum} output detected!`);
       
       if (phaseNum === 5) {
-        renderThemeCards(rows.rows);
+        renderThemeCards(rows);
         document.getElementById('resultsCard').classList.remove('hidden');
       }
     } else {
