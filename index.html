@@ -389,14 +389,147 @@
     to { transform: rotate(360deg); }
   }
 
-  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; }
-  .tab-btn {
-    padding: 10px 20px; background: none; border: none;
-    border-bottom: 2px solid transparent;
+  /* ===================== TOP-LEVEL APP NAVIGATION ===================== */
+  .app-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(6, 9, 15, 0.85); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+  }
+  .app-nav__inner {
+    max-width: 1040px; margin: 0 auto;
+    display: flex; align-items: center; gap: 0;
+  }
+  .app-nav__brand {
+    font-size: 14px; font-weight: 700; color: var(--text-dim);
+    padding: 14px 20px 14px 0; border-right: 1px solid var(--border);
+    margin-right: 4px; white-space: nowrap; letter-spacing: -0.02em;
+  }
+  .app-nav__tab {
+    padding: 14px 20px; background: none; border: none;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
     color: var(--text-dim); font-family: inherit; font-size: 13px;
     font-weight: 500; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
   }
-  .tab-btn.active { border-bottom-color: var(--accent-blue); color: var(--text-primary); font-weight: 600; }
+  .app-nav__tab:hover { color: var(--text-muted); }
+  .app-nav__tab.active {
+    border-bottom-color: var(--accent-blue); color: var(--text-primary); font-weight: 600;
+  }
+  .app-nav__tab .nav-badge {
+    font-size: 10px; padding: 1px 7px; border-radius: 99px;
+    background: rgba(96, 165, 250, 0.15); color: var(--accent-blue);
+    font-weight: 600;
+  }
+  .app-tab-panel { display: none; }
+  .app-tab-panel.active { display: block; }
+
+  /* ===================== PROMPT EDITOR ===================== */
+  .prompt-editor-section {
+    margin-top: 36px; padding: 28px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-surface));
+    border: 1px solid var(--border);
+  }
+  .prompt-editor__label {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 8px; font-weight: 500;
+  }
+  .prompt-editor__desc {
+    font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;
+  }
+  .prompt-editor__textarea {
+    width: 100%; min-height: 260px; padding: 16px 20px; border-radius: 10px;
+    background: var(--bg-void); border: 1px solid var(--border);
+    color: var(--text-secondary); font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; line-height: 1.7; resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .prompt-editor__textarea:focus {
+    outline: none; border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.15);
+  }
+  .btn-proceed {
+    width: 100%; padding: 16px; border-radius: 12px; font-weight: 700;
+    font-size: 16px; color: var(--bg-deep); cursor: pointer;
+    border: none; font-family: inherit; transition: all 0.3s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 20px; letter-spacing: 0.3px;
+  }
+  .btn-proceed:hover { transform: translateY(-2px); }
+  .btn-proceed:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ===================== PHASE REVIEW CARDS ===================== */
+  .phase-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+    transition: border-color 0.3s;
+  }
+  .phase-card.phase-active { border-color: rgba(96, 165, 250, 0.4); }
+  .phase-card.phase-ready { border-color: rgba(245, 158, 11, 0.4); }
+  .phase-card.phase-approved { border-color: rgba(16, 185, 129, 0.3); }
+  .phase-card__header {
+    padding: 20px 24px; display: flex; justify-content: space-between;
+    align-items: center; cursor: pointer; transition: background 0.2s;
+  }
+  .phase-card__header:hover { background: rgba(255, 255, 255, 0.02); }
+  .phase-card__title-area { display: flex; align-items: center; gap: 14px; }
+  .phase-card__number {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; flex-shrink: 0;
+    background: var(--bg-surface); border: 2px solid var(--border);
+    color: var(--text-muted); transition: all 0.3s;
+  }
+  .phase-card.phase-active .phase-card__number {
+    border-color: var(--accent-blue);
+    background: rgba(96, 165, 250, 0.12); color: var(--accent-blue);
+    box-shadow: 0 0 12px rgba(96, 165, 250, 0.3);
+  }
+  .phase-card.phase-ready .phase-card__number {
+    border-color: var(--warning);
+    background: rgba(245, 158, 11, 0.12); color: var(--warning);
+  }
+  .phase-card.phase-approved .phase-card__number {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.12); color: #10B981;
+  }
+  .phase-card__name { font-size: 15px; font-weight: 600; }
+  .phase-card__status-badge {
+    font-size: 11px; padding: 4px 12px; border-radius: 99px;
+    font-weight: 600; letter-spacing: 0.02em;
+  }
+  .phase-badge--pending { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+  .phase-badge--processing {
+    background: rgba(96, 165, 250, 0.12); color: var(--accent-blue);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .phase-badge--ready { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+  .phase-badge--approved { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+  .phase-card__body {
+    padding: 0 24px 24px; display: none;
+  }
+  .phase-card__body.visible { display: block; }
+  .phase-card__output {
+    background: var(--bg-void); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 16px;
+    font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+    max-height: 400px; overflow-y: auto;
+  }
+  .btn-approve {
+    padding: 12px 28px; border-radius: 10px; font-weight: 700;
+    font-size: 14px; color: var(--bg-deep); cursor: pointer;
+    border: none; font-family: inherit; transition: all 0.2s;
+    background: linear-gradient(135deg, #10B981, #059669);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-approve:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+  .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
   .toast {
     position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -884,222 +1017,118 @@
 </head>
 <body>
 
-<!-- ============ SELECT SCREEN ============ -->
-<div class="container select" id="selectScreen">
-  <div class="header">
-    <div class="header__eyebrow">Automated Thematic Analysis Engine</div>
-    <h1 class="header__title">Select Your Analytical Persona</h1>
-    <p class="header__sub">Each persona pre-calibrates the Braun & Clarke (2006, 2022) continua and Saldaña (2021) coding profile. Configure dials and sensitizing lenses, then export a ready-to-paste n8n Code Tool.</p>
+<!-- ============ TOP-LEVEL NAVIGATION ============ -->
+<nav class="app-nav">
+  <div class="app-nav__inner">
+    <div class="app-nav__brand">Thematic Analysis</div>
+    <button class="app-nav__tab active" id="navTabSetup" onclick="switchAppTab('setup')">🧬 Persona Setup</button>
+    <button class="app-nav__tab" id="navTabDashboard" onclick="switchAppTab('dashboard')">📊 Analysis Dashboard <span class="nav-badge" id="phaseBadge" style="display:none;">—</span></button>
   </div>
-  <div class="persona-grid" id="personaGrid"></div>
-  <div class="footer">
-    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
-    Persona architecture designed for defensible automated thematic analysis
-  </div>
-</div>
+</nav>
 
-<!-- ============ CONFIGURE SCREEN ============ -->
-<div class="container configure" id="configScreen">
-  <div class="config-header">
-    <button class="btn-back" onclick="goBack()">← Back</button>
-    <div class="config-header__icon" id="cfgIcon"></div>
-    <div>
-      <div class="config-header__name" id="cfgName"></div>
-      <div class="config-header__paradigm" id="cfgParadigm"></div>
+<!-- ============ TAB 1: PERSONA SETUP ============ -->
+<div class="app-tab-panel active" id="panelSetup">
+
+  <!-- SELECT SCREEN -->
+  <div class="container select" id="selectScreen">
+    <div class="header">
+      <div class="header__eyebrow">Automated Thematic Analysis Engine</div>
+      <h1 class="header__title">Select Your Analytical Persona</h1>
+      <p class="header__sub">Each persona pre-calibrates the Braun & Clarke (2006, 2022) continua and Saldaña (2021) coding profile. Configure dials and sensitizing lenses to shape the analysis.</p>
+    </div>
+    <div class="persona-grid" id="personaGrid"></div>
+    <div class="footer">
+      Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+      Persona architecture designed for defensible automated thematic analysis
     </div>
   </div>
 
-  <div class="config-grid">
-    <div>
-      <div class="section-label">Methodological Dials · Braun & Clarke Continua</div>
-      <div id="dialsContainer"></div>
-      <div class="coherence-box" id="coherenceBox">
-        <div class="coherence-box__title">⚠ Coherence Warnings</div>
-        <div id="coherenceItems"></div>
-      </div>
-    </div>
-
-    <div>
-      <div class="section-label">Sensitizing Frameworks · Co-equal Analytical Commitments</div>
-      <div id="lensContainer"></div>
-
-      <div class="section-label" style="margin-top:24px">Saldaña Coding Profile</div>
-      <div class="coding-box">
-        <div class="coding-box__label">Priority methods for this configuration:</div>
-        <div class="coding-chips" id="codingChips"></div>
-      </div>
-
-      <div class="citation-box">
-        <div class="citation-box__label">Auto-generated Citation Anchor</div>
-        <div class="citation-box__text" id="citationText"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="summary-bar" id="summaryBar">
-    <div>
-      <div class="summary-bar__title">Configuration Summary</div>
-      <div class="summary-bar__detail" id="summaryDetail"></div>
-    </div>
-    <div style="display: flex; gap: 12px;">
-      <button class="summary-bar__btn" id="dashOpenBtn" onclick="openDashboard()" style="background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">📊 Open Dashboard</button>
-      <button class="summary-bar__btn" id="summaryBtn" onclick="openExportModal()">Export n8n Code Tool →</button>
-    </div>
-  </div>
-
-  <div class="footer">
-    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
-    Persona architecture designed for defensible automated thematic analysis
-  </div>
-</div>
-
-<!-- ============ DASHBOARD SCREEN ============ -->
-<div class="container dashboard hidden" id="dashboardScreen">
-  <div class="config-header" style="margin-bottom: 32px;">
-    <button class="btn-back" onclick="closeDashboard()">← Back</button>
-    <div class="config-header__icon" id="dashIcon">📊</div>
-    <div>
-      <div class="config-header__name" id="dashName">Thematic Analysis Dashboard</div>
-      <div class="config-header__paradigm" id="dashParadigm">Live Status & Thematic Outputs</div>
-    </div>
-  </div>
-
-  <div class="dashboard-progress-section">
-    <div class="progress-card">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-        <h3 class="card-title" style="margin: 0;">Analysis Process Logs</h3>
-        <button class="btn-refresh-sheet" onclick="pollSheetData()">
-          <span class="refresh-icon">🔄</span> Poll for Updates
-        </button>
-      </div>
-
-      <div class="stepper" id="stepper">
-        <div class="step" id="step1">
-          <div class="step-icon">1</div>
-          <div class="step-content">
-            <div class="step-label">Phase 1: Validity Screening</div>
-            <div class="step-status">Checking Validity of Responses...</div>
-          </div>
-        </div>
-        <div class="step" id="step2">
-          <div class="step-icon">2</div>
-          <div class="step-content">
-            <div class="step-label">Phase 2: Initial Coding</div>
-            <div class="step-status">Generating codes via Braun & Clarke reflexive methods...</div>
-          </div>
-        </div>
-        <div class="step" id="step3">
-          <div class="step-icon">3</div>
-          <div class="step-content">
-            <div class="step-label">Phase 3: Theme Generation</div>
-            <div class="step-status">Grouping codes into candidate patterns...</div>
-          </div>
-        </div>
-        <div class="step" id="step4">
-          <div class="step-icon">4</div>
-          <div class="step-content">
-            <div class="step-label">Phase 4: Theme Review</div>
-            <div class="step-status">Refining candidate themes against source datasets...</div>
-          </div>
-        </div>
-        <div class="step" id="step5">
-          <div class="step-icon">5</div>
-          <div class="step-content">
-            <div class="step-label">Phase 5: Narrative Report</div>
-            <div class="step-status">Synthesizing narrative descriptions and report...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Thematic Output Viewer -->
-  <div class="results-card hidden" id="resultsCard">
-    <h3 class="card-title">Generated Themes & Subthemes</h3>
-    <div class="themes-grid" id="themesGrid">
-      <!-- Dynamically populated theme cards -->
-    </div>
-  </div>
-
-  <div class="footer">
-    Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
-    Thematic Dashboard connects dynamically to your Output Google Spreadsheet.
-  </div>
-</div>
-
-<!-- ============ EXPORT MODAL ============ -->
-<div class="modal-overlay" id="exportModal">
-  <div class="modal">
-    <div class="modal__header">
+  <!-- CONFIGURE SCREEN -->
+  <div class="container configure" id="configScreen">
+    <div class="config-header">
+      <button class="btn-back" onclick="goBack()">← Back</button>
+      <div class="config-header__icon" id="cfgIcon"></div>
       <div>
-        <div class="modal__title" id="modalTitle">⚙️ Generated n8n Code Tool</div>
-        <div class="modal__subtitle" id="modalSubtitle">Paste this JavaScript directly into an n8n Code Tool node attached to your AI Agent</div>
+        <div class="config-header__name" id="cfgName"></div>
+        <div class="config-header__paradigm" id="cfgParadigm"></div>
       </div>
-      <button class="modal__close" onclick="closeExportModal()">✕ Close</button>
     </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" id="tabCode" onclick="switchTab('code')">n8n Code Tool</button>
-      <button class="tab-btn" id="tabJson" onclick="switchTab('json')">Raw Config JSON</button>
-    </div>
-    <div class="modal__body">
-      <pre class="modal__code" id="exportContent"></pre>
 
-      <div class="n8n-integration-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="webhookUrl">
-              n8n Webhook URL 
-              <span class="label-desc">URL from the Webhook Trigger node in n8n</span>
-            </label>
-            <input type="text" id="webhookUrl" value="https://n8n-perote.onrender.com/webhook/n8n-perote" placeholder="https://your-n8n-instance.com/webhook/persona-thematic-analysis">
-          </div>
-          <div class="form-group">
-            <label for="inputSpreadsheetUrl">
-              Input Google Spreadsheet URL 
-              <span class="label-desc">Contains the participant responses</span>
-            </label>
-            <input type="text" id="inputSpreadsheetUrl" placeholder="https://docs.google.com/spreadsheets/d/.../edit">
-          </div>
-          <div class="form-group">
-            <label for="outputSpreadsheetUrl">
-              Output Google Spreadsheet URL
-              <span class="label-desc">Where results will be written (optional, defaults to Input)</span>
-            </label>
-            <input type="text" id="outputSpreadsheetUrl" placeholder="Leave blank to use the same spreadsheet">
-          </div>
-          <div class="form-row">
-            <div class="form-group half">
-              <label for="sheetName">
-                Responses Sheet Name
-              </label>
-              <input type="text" id="sheetName" placeholder="Form Responses 1">
-            </div>
-            <div class="form-group half">
-              <label for="questionKeyword">
-                Question Header Keyword
-              </label>
-              <input type="text" id="questionKeyword" placeholder="biggest challenge">
-            </div>
-          </div>
-          <div class="form-row" style="margin-top: 12px;">
-            <div class="form-group">
-              <label for="themesSheetName">
-                Final Themes Sheet Name
-                <span class="label-desc">(Optional - Leave blank to auto-discover correct tab name)</span>
-              </label>
-              <input type="text" id="themesSheetName" value="" placeholder="e.g. Final Themes (or leave blank to auto-discover)">
-            </div>
-          </div>
+    <div class="config-grid">
+      <div>
+        <div class="section-label">Methodological Dials · Braun & Clarke Continua</div>
+        <div id="dialsContainer"></div>
+        <div class="coherence-box" id="coherenceBox">
+          <div class="coherence-box__title">⚠ Coherence Warnings</div>
+          <div id="coherenceItems"></div>
         </div>
-        <button class="btn-trigger-n8n" id="btnTriggerWorkflow" onclick="sendToWebhook()">
-          <span>🚀 Trigger Automated n8n Pipeline</span>
-          <div class="spinner hidden" id="n8nSpinner"></div>
-        </button>
+      </div>
+
+      <div>
+        <div class="section-label">Sensitizing Frameworks · Co-equal Analytical Commitments</div>
+        <div id="lensContainer"></div>
+
+        <div class="section-label" style="margin-top:24px">Saldaña Coding Profile</div>
+        <div class="coding-box">
+          <div class="coding-box__label">Priority methods for this configuration:</div>
+          <div class="coding-chips" id="codingChips"></div>
+        </div>
+
+        <div class="citation-box">
+          <div class="citation-box__label">Auto-generated Citation Anchor</div>
+          <div class="citation-box__text" id="citationText"></div>
+        </div>
       </div>
     </div>
-    <div class="modal__actions">
-      <button class="btn-action btn-action--primary" id="btnCopy" onclick="copyCurrentTab()">📋 Copy n8n Code Tool</button>
-      <button class="btn-action btn-action--secondary" id="btnDownload" onclick="downloadCurrentTab()">⬇ Download</button>
+
+    <!-- EDITABLE PROMPT PREVIEW -->
+    <div class="prompt-editor-section" id="promptEditorSection">
+      <div class="prompt-editor__label">Generated Persona Prompt</div>
+      <div class="prompt-editor__desc">
+        Review and customize the analytical directive below. This prompt will be sent to the backend engine to guide Phase 1 of the Braun & Clarke thematic analysis pipeline.
+      </div>
+      <textarea class="prompt-editor__textarea" id="promptTextarea" spellcheck="false"></textarea>
+      <button class="btn-proceed" id="btnProceed" onclick="proceedToAnalysis()" style="background: var(--persona-color, var(--accent-blue));">
+        <span>🚀 Proceed to Analysis</span>
+        <div class="spinner hidden" id="proceedSpinner"></div>
+      </button>
+    </div>
+
+    <div class="footer">
+      Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+      Persona architecture designed for defensible automated thematic analysis
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ TAB 2: ANALYSIS DASHBOARD ============ -->
+<div class="app-tab-panel" id="panelDashboard">
+  <div class="container" id="dashboardScreen">
+    <div class="config-header" style="margin-bottom: 32px;">
+      <div class="config-header__icon" id="dashIcon">📊</div>
+      <div>
+        <div class="config-header__name" id="dashName">Thematic Analysis Dashboard</div>
+        <div class="config-header__paradigm" id="dashParadigm">Phase-by-Phase Human Review Pipeline</div>
+      </div>
+    </div>
+
+    <!-- Phase Cards -->
+    <div id="phaseCardsContainer">
+      <!-- Dynamically populated by renderPhaseCards() -->
+    </div>
+
+    <!-- Thematic Output Viewer (Phase 5 Results) -->
+    <div class="results-card hidden" id="resultsCard">
+      <h3 class="card-title">Final Thematic Report</h3>
+      <div class="themes-grid" id="themesGrid">
+        <!-- Dynamically populated theme cards -->
+      </div>
+    </div>
+
+    <div class="footer">
+      Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+      Thematic Dashboard connects dynamically to your Output Google Spreadsheet.
     </div>
   </div>
 </div>
@@ -1295,6 +1324,8 @@ function renderConfig() {
   renderCitation();
   renderSummary();
   renderWarnings();
+  // Populate the editable prompt preview
+  setTimeout(populatePromptEditor, 100);
 }
 
 function renderDials() {
@@ -1677,9 +1708,38 @@ function generatePersonaPrompt() {
   }
 }
 
-// ===================== EXPORT FUNCTIONS =====================
+// ===================== HARDCODED BACKEND CONFIG =====================
+const BACKEND_CONFIG = {
+  webhookUrl: 'https://n8n-perote.onrender.com/webhook/n8n-perote',
+  inputSpreadsheetId: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
+  outputSpreadsheetId: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
+  sheetName: 'Form Responses 1',
+  questionKeyword: 'biggest challenge'
+};
 
-let currentTab = 'code';
+// ===================== PHASE STATE =====================
+const PHASES = [
+  { num: 1, name: 'Phase 1: Validity Screening', desc: 'Checking validity of participant responses...' },
+  { num: 2, name: 'Phase 2: Initial Coding', desc: 'Generating codes via Braun & Clarke reflexive methods...' },
+  { num: 3, name: 'Phase 3: Theme Generation', desc: 'Grouping codes into candidate patterns...' },
+  { num: 4, name: 'Phase 4: Theme Review', desc: 'Refining candidate themes against source datasets...' },
+  { num: 5, name: 'Phase 5: Narrative Report', desc: 'Synthesizing narrative descriptions and final report...' }
+];
+
+let phaseState = {
+  currentPhase: 0,
+  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' }
+};
+
+function savePhaseState() {
+  localStorage.setItem('n8n_ta_phase_state', JSON.stringify(phaseState));
+}
+function loadPhaseState() {
+  try {
+    const saved = localStorage.getItem('n8n_ta_phase_state');
+    if (saved) phaseState = JSON.parse(saved);
+  } catch(e) { console.error('Error loading phase state', e); }
+}
 
 function generatePersonaSpec() {
   const p = getPersona();
@@ -1689,45 +1749,10 @@ function generatePersonaSpec() {
     persona: { id: p.id, name: p.name, icon: p.icon, paradigm: p.paradigm, cite: p.cite, color: p.color },
     dials: { base: { ...state.dials }, effective: { ...eff }, bounds: { ...p.bounds }, warnings: state.warnings.map(w => w.msg) },
     sensitizing_frameworks: state.activeLenses.map(lid => { const l = LENSES.find(x => x.id === lid); return { id: l.id, name: l.name, cite: l.cite, concepts: l.concepts, dial_influence: l.dialPush || {} }; }),
-    coding_profile: p.coding,
+    coding_profile: getPersona().coding,
     coherence_status: state.warnings.length === 0 ? "clean" : "warnings_present",
     exported_at: new Date().toISOString()
   };
-}
-
-function switchTab(tab) {
-  currentTab = tab;
-  const codeTab = document.getElementById('tabCode');
-  const jsonTab = document.getElementById('tabJson');
-  const content = document.getElementById('exportContent');
-  const btnCopy = document.getElementById('btnCopy');
-  const btnDl = document.getElementById('btnDownload');
-
-  if (tab === 'code') {
-    codeTab.classList.add('active');
-    jsonTab.classList.remove('active');
-    content.textContent = generateN8nCodeTool();
-    btnCopy.textContent = '📋 Copy n8n Code Tool';
-    btnDl.textContent = '⬇ Download .js';
-  } else {
-    jsonTab.classList.add('active');
-    codeTab.classList.remove('active');
-    content.textContent = JSON.stringify(generatePersonaSpec(), null, 2);
-    btnCopy.textContent = '📋 Copy JSON';
-    btnDl.textContent = '⬇ Download .json';
-  }
-}
-
-function openExportModal() {
-  const p = getPersona();
-  document.getElementById('btnCopy').style.background = p.color;
-  document.getElementById('exportModal').classList.add('visible');
-  currentTab = 'code';
-  switchTab('code');
-}
-
-function closeExportModal() {
-  document.getElementById('exportModal').classList.remove('visible');
 }
 
 function showToast(msg) {
@@ -1737,173 +1762,186 @@ function showToast(msg) {
   setTimeout(() => toast.classList.remove('visible'), 2500);
 }
 
-function copyCurrentTab() {
-  const text = document.getElementById('exportContent').textContent;
-  navigator.clipboard.writeText(text).then(() =>
-    showToast(currentTab === 'code' ? 'n8n Code Tool copied to clipboard' : 'Config JSON copied to clipboard')
-  );
-}
-
-function downloadCurrentTab() {
-  const text = document.getElementById('exportContent').textContent;
-  const p = getPersona();
-  const ts = Date.now();
-  let filename, mime;
-  if (currentTab === 'code') {
-    filename = `n8n_tool_PersonaEngine_${p.id}_${ts}.js`;
-    mime = 'text/javascript';
-  } else {
-    filename = `persona_spec_${p.id}_${ts}.json`;
-    mime = 'application/json';
-  }
-  const blob = new Blob([text], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-  showToast(`Downloaded ${filename}`);
-}
-
-// LocalStorage Persistence Helpers
-function saveIntegrationSettings() {
-  const settings = {
-    webhookUrl: document.getElementById('webhookUrl').value.trim(),
-    inputSpreadsheetUrl: document.getElementById('inputSpreadsheetUrl').value.trim(),
-    outputSpreadsheetUrl: document.getElementById('outputSpreadsheetUrl').value.trim(),
-    sheetName: document.getElementById('sheetName').value.trim(),
-    questionKeyword: document.getElementById('questionKeyword').value.trim(),
-    themesSheetName: document.getElementById('themesSheetName').value.trim()
-  };
-  localStorage.setItem('n8n_ta_integration_settings', JSON.stringify(settings));
-}
-
-function loadIntegrationSettings() {
-  try {
-    const saved = localStorage.getItem('n8n_ta_integration_settings');
-    if (saved) {
-      const settings = JSON.parse(saved);
-      if (settings.webhookUrl) document.getElementById('webhookUrl').value = settings.webhookUrl;
-      if (settings.inputSpreadsheetUrl) document.getElementById('inputSpreadsheetUrl').value = settings.inputSpreadsheetUrl;
-      if (settings.outputSpreadsheetUrl) document.getElementById('outputSpreadsheetUrl').value = settings.outputSpreadsheetUrl;
-      if (settings.sheetName) document.getElementById('sheetName').value = settings.sheetName;
-      if (settings.questionKeyword) document.getElementById('questionKeyword').value = settings.questionKeyword;
-      if (settings.themesSheetName) document.getElementById('themesSheetName').value = settings.themesSheetName;
-    }
-  } catch (e) {
-    console.error('Error loading integration settings', e);
-  }
-}
-
-// Add change listeners to auto-save settings
-['webhookUrl', 'inputSpreadsheetUrl', 'outputSpreadsheetUrl', 'sheetName', 'questionKeyword', 'themesSheetName'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', saveIntegrationSettings);
-});
-
-async function sendToWebhook() {
-  const url = document.getElementById('webhookUrl').value.trim();
-  const inputSpreadsheetUrl = document.getElementById('inputSpreadsheetUrl').value.trim();
-  const outputSpreadsheetUrl = document.getElementById('outputSpreadsheetUrl').value.trim();
-  const sheetName = document.getElementById('sheetName').value.trim() || 'Form Responses 1';
-  const questionKeyword = document.getElementById('questionKeyword').value.trim() || 'biggest challenge';
-
-  if (!url) { showToast('Enter your n8n Webhook URL first'); return; }
-  if (!inputSpreadsheetUrl) { showToast('Enter your Input Google Spreadsheet URL'); return; }
-
-  // Extract spreadsheet ID from URL helper
-  const extractSpreadsheetId = (urlOrId) => {
-    const match = urlOrId.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    return match ? match[1] : urlOrId;
-  };
-
-  const inputSpreadsheetId = extractSpreadsheetId(inputSpreadsheetUrl);
-  const outputSpreadsheetId = outputSpreadsheetUrl ? extractSpreadsheetId(outputSpreadsheetUrl) : inputSpreadsheetId;
-
-  // UI state updates: show loader
-  const spinner = document.getElementById('n8nSpinner');
-  const btn = document.getElementById('btnTriggerWorkflow');
+// ===================== APP TAB NAVIGATION =====================
+function switchAppTab(tabName) {
+  document.getElementById('panelSetup').classList.toggle('active', tabName === 'setup');
+  document.getElementById('panelDashboard').classList.toggle('active', tabName === 'dashboard');
+  document.getElementById('navTabSetup').classList.toggle('active', tabName === 'setup');
+  document.getElementById('navTabDashboard').classList.toggle('active', tabName === 'dashboard');
   
-  if (spinner) spinner.classList.remove('hidden');
-  if (btn) {
-    btn.disabled = true;
-    btn.style.opacity = '0.7';
+  if (tabName === 'dashboard') {
+    renderPhaseCards();
+    const p = PERSONAS.find(x => x.id === currentPersonaId);
+    if (p) {
+      document.getElementById('dashIcon').innerText = p.icon;
+      document.getElementById('dashName').innerText = `${p.name} · Analysis Dashboard`;
+      document.getElementById('dashParadigm').innerText = `Active Paradigm: ${p.paradigm}`;
+    }
   }
+}
+
+function updatePhaseBadge() {
+  const badge = document.getElementById('phaseBadge');
+  if (phaseState.currentPhase > 0) {
+    badge.style.display = 'inline';
+    badge.textContent = `P${phaseState.currentPhase}`;
+  }
+}
+
+// ===================== PROMPT DISPLAY =====================
+function populatePromptEditor() {
+  const textarea = document.getElementById('promptTextarea');
+  if (textarea) textarea.value = generatePersonaPrompt();
+}
+
+// ===================== PROCEED TO ANALYSIS =====================
+async function proceedToAnalysis() {
+  const promptText = document.getElementById('promptTextarea').value.trim();
+  if (!promptText) { showToast('Prompt cannot be empty'); return; }
+  
+  phaseState.currentPhase = 1;
+  phaseState.statuses[1] = 'processing';
+  savePhaseState();
+  updatePhaseBadge();
+  
+  await sendPhaseToWebhook(1, promptText);
+  switchAppTab('dashboard');
+}
+
+async function sendPhaseToWebhook(phaseNum, promptText) {
+  const spinner = document.getElementById('proceedSpinner');
+  const btn = document.getElementById('btnProceed');
+  if (spinner) spinner.classList.remove('hidden');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.7'; }
 
   const payload = {
-    n8n_code_tool: generateN8nCodeTool(),
-    persona_prompt: generatePersonaPrompt(),
+    phase: `n8n_PHASE${phaseNum}`,
+    persona_prompt: promptText || document.getElementById('promptTextarea').value.trim(),
     config: {
       ...generatePersonaSpec(),
-      inputSpreadsheetId: inputSpreadsheetId,
-      outputSpreadsheetId: outputSpreadsheetId,
-      sheetName: sheetName,
-      questionKeyword: questionKeyword
+      inputSpreadsheetId: BACKEND_CONFIG.inputSpreadsheetId,
+      outputSpreadsheetId: BACKEND_CONFIG.outputSpreadsheetId,
+      sheetName: BACKEND_CONFIG.sheetName,
+      questionKeyword: BACKEND_CONFIG.questionKeyword
     }
   };
 
   try {
-    const res = await fetch(url, { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify(payload) 
+    const res = await fetch(BACKEND_CONFIG.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
-      showToast('🚀 Pipeline triggered! Transitioning to dashboard...');
-      closeExportModal();
-      setTimeout(openDashboard, 1500);
+      showToast(`🚀 Phase ${phaseNum} triggered successfully!`);
+      phaseState.statuses[phaseNum] = 'processing';
     } else {
       showToast(`n8n responded with status ${res.status}`);
+      phaseState.statuses[phaseNum] = 'pending';
     }
   } catch (e) {
-    showToast(`Failed to reach n8n: ${e.message}`);
+    showToast(`Failed to reach backend: ${e.message}`);
+    phaseState.statuses[phaseNum] = 'pending';
   } finally {
+    savePhaseState();
     if (spinner) spinner.classList.add('hidden');
-    if (btn) {
-      btn.disabled = false;
-      btn.style.opacity = '1';
-    }
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    renderPhaseCards();
   }
 }
 
-document.getElementById('exportModal').addEventListener('click', function(e) { if (e.target === this) closeExportModal(); });
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeExportModal(); });
+async function approveAndProceed(completedPhase) {
+  phaseState.statuses[completedPhase] = 'approved';
+  const nextPhase = completedPhase + 1;
+  if (nextPhase <= 5) {
+    phaseState.currentPhase = nextPhase;
+    phaseState.statuses[nextPhase] = 'processing';
+    savePhaseState();
+    renderPhaseCards();
+    updatePhaseBadge();
+    await sendPhaseToWebhook(nextPhase);
+  } else {
+    phaseState.currentPhase = 5;
+    savePhaseState();
+    renderPhaseCards();
+    showToast('🎉 All phases complete! Final report is ready.');
+  }
+}
+
+// ===================== PHASE CARDS RENDERER =====================
+function renderPhaseCards() {
+  const container = document.getElementById('phaseCardsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+
+  PHASES.forEach(phase => {
+    const status = phaseState.statuses[phase.num] || 'pending';
+    const statusClass = status === 'pending' ? '' : `phase-${status}`;
+    const badgeClass = `phase-badge--${status}`;
+    const badgeLabels = { pending: 'Pending', processing: '⏳ Processing...', ready: '⚠ Awaiting Review', approved: '✅ Approved' };
+
+    const card = document.createElement('div');
+    card.className = `phase-card ${statusClass}`;
+    card.id = `phaseCard_${phase.num}`;
+
+    card.innerHTML = `
+      <div class="phase-card__header" onclick="togglePhaseBody(${phase.num})">
+        <div class="phase-card__title-area">
+          <div class="phase-card__number">${status === 'approved' ? '✓' : phase.num}</div>
+          <div class="phase-card__name">${phase.name}</div>
+        </div>
+        <span class="phase-card__status-badge ${badgeClass}">${badgeLabels[status]}</span>
+      </div>
+      <div class="phase-card__body" id="phaseBody_${phase.num}">
+        <div class="phase-card__output" id="phaseOutput_${phase.num}">
+          ${status === 'pending' ? '<div style="text-align:center; color:var(--text-dim);">Waiting for previous phases to complete.</div>' : ''}
+          ${status === 'processing' ? '<div style="text-align:center; color:var(--accent-blue);">⏳ Backend is processing this phase. Results will appear here when ready.<br><br><button class="btn-refresh-sheet" onclick="pollPhaseData('+phase.num+')">🔄 Check for Results</button></div>' : ''}
+          ${status === 'ready' ? '<div style="color:var(--text-muted);">Output loaded. Review below and approve to continue.</div>' : ''}
+          ${status === 'approved' ? '<div style="color:#10B981;">✅ This phase has been reviewed and approved.</div>' : ''}
+        </div>
+        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
+      </div>
+    `;
+
+    // Auto-expand active/ready phases
+    if (status === 'processing' || status === 'ready') {
+      card.querySelector('.phase-card__body').classList.add('visible');
+    }
+
+    container.appendChild(card);
+  });
+}
+
+function togglePhaseBody(num) {
+  const body = document.getElementById(`phaseBody_${num}`);
+  if (body) body.classList.toggle('visible');
+}
+
+async function pollPhaseData(phaseNum) {
+  // For now, mark as ready when user manually checks
+  // This will be enhanced when the Google Sheet link is provided
+  try {
+    const rows = await autoDiscoverThemes(BACKEND_CONFIG.outputSpreadsheetId);
+    if (rows && rows.rows && rows.rows.length > 1) {
+      phaseState.statuses[phaseNum] = 'ready';
+      savePhaseState();
+      renderPhaseCards();
+      showToast(`Phase ${phaseNum} output detected!`);
+      
+      if (phaseNum === 5) {
+        renderThemeCards(rows.rows);
+        document.getElementById('resultsCard').classList.remove('hidden');
+      }
+    } else {
+      showToast('No results found yet. The backend may still be processing.');
+    }
+  } catch(e) {
+    showToast(`Check failed: ${e.message}`);
+  }
+}
 
 // ===================== DASHBOARD ENGINE =====================
 let pollInterval = null;
-
-function openDashboard() {
-  document.getElementById('configScreen').classList.add('hidden');
-  document.getElementById('selectScreen').classList.add('hidden');
-  document.getElementById('dashboardScreen').classList.remove('hidden');
-  
-  const summaryBar = document.getElementById('summaryBar');
-  if (summaryBar) summaryBar.style.display = 'none';
-  
-  const p = PERSONAS.find(x => x.id === currentPersonaId);
-  if (p) {
-    document.getElementById('dashIcon').innerText = p.icon;
-    document.getElementById('dashName').innerText = `${p.name} · Analysis Dashboard`;
-    document.getElementById('dashParadigm').innerText = `Active Paradigm: ${p.paradigm}`;
-  }
-  
-  pollSheetData();
-  
-  if (pollInterval) clearInterval(pollInterval);
-  pollInterval = setInterval(pollSheetData, 12000);
-}
-
-function closeDashboard() {
-  document.getElementById('dashboardScreen').classList.add('hidden');
-  document.getElementById('configScreen').classList.remove('hidden');
-  
-  const summaryBar = document.getElementById('summaryBar');
-  if (summaryBar) summaryBar.style.display = 'flex';
-  
-  if (pollInterval) {
-    clearInterval(pollInterval);
-    pollInterval = null;
-  }
-}
 
 async function fetchGoogleSheetRows(spreadsheetId, sheetName) {
   const url = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
@@ -2397,7 +2435,8 @@ async function pollSheetData() {
 
 // ===================== INIT =====================
 renderSelect();
-loadIntegrationSettings();
+loadPhaseState();
+updatePhaseBadge();
 
 // ===================== FULLSCREEN BUTTON =====================
 const btnFullscreen = document.getElementById('btnFullscreen');
