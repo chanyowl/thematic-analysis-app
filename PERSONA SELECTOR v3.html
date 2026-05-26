@@ -1842,23 +1842,25 @@ const BACKEND_CONFIG = {
     2: '1SnHrsnz00vDBqjNvmEydo176FjKU5ZYji3KXOmBjjSc',
     3: '1126H_UiwUCAsGW0xk3tPqDYPUY7NgKQsbTohJEP6afI',
     4: '1_Gw3oO6xhTUfOOjDus5myHG04_5srb4PB5se6wxXmyQ',
-    5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
+    5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8',
+    6: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
   }
 };
 
 // ===================== PHASE STATE =====================
 const PHASES = [
-  { num: 1, name: 'Phase 1: Validity Screening', desc: 'Checking validity of participant responses...' },
-  { num: 2, name: 'Phase 2: Initial Coding', desc: 'Generating codes via Braun & Clarke reflexive methods...' },
-  { num: 3, name: 'Phase 3: Theme Generation', desc: 'Grouping codes into candidate patterns...' },
-  { num: 4, name: 'Phase 4: Theme Review', desc: 'Refining candidate themes against source datasets...' },
-  { num: 5, name: 'Phase 5: Narrative Report', desc: 'Synthesizing narrative descriptions and final report...' }
+  { num: 1, name: 'Phase 1: Familiarization with the Data', desc: 'Read and re-read dataset, casual initial notes, and screening.' },
+  { num: 2, name: 'Phase 2: Generating Initial Codes', desc: 'Methodically assign meaningful labels; capture semantic & latent codes.' },
+  { num: 3, name: 'Phase 3: Generating Initial Themes', desc: 'Cluster related codes together; construct shared central organizing concepts.' },
+  { num: 4, name: 'Phase 4: Reviewing Themes', desc: 'Check candidate themes against extracts and the entire dataset.' },
+  { num: 5, name: 'Phase 5: Defining and Naming Themes', desc: 'Formulate detailed definitions and select punchy, cohesive titles.' },
+  { num: 6, name: 'Phase 6: Writing the Report', desc: 'Weave a compelling narrative answering the research question with verbatim quotes.' }
 ];
 
 let phaseState = {
   currentPhase: 0,
-  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' },
-  outputs: { 1: null, 2: null, 3: null, 4: null, 5: null }
+  statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending', 6: 'pending' },
+  outputs: { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null }
 };
 
 function savePhaseState() {
@@ -1915,9 +1917,11 @@ function switchAppTab(tabName) {
       document.getElementById('dashParadigm').innerText = 'Select a persona to calibrate paradigm';
     }
     
-    // Auto-render final themes if phase 5 is ready/approved
-    if ((phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved') && phaseState.outputs[5]) {
-      renderThemeCards(phaseState.outputs[5]);
+    // Auto-render final themes if phase 5 or 6 is ready/approved
+    const hasFinalData = (phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved' || phaseState.statuses[6] === 'ready' || phaseState.statuses[6] === 'approved');
+    const finalOutput = phaseState.outputs[5] || phaseState.outputs[6];
+    if (hasFinalData && finalOutput) {
+      renderThemeCards(finalOutput);
       document.getElementById('resultsCard').classList.remove('hidden');
     } else {
       document.getElementById('resultsCard').classList.add('hidden');
@@ -1949,7 +1953,7 @@ function startDashboardPolling() {
           renderPhaseCards();
           showToast(`🎉 Phase ${pNum} output is ready for review!`);
           
-          if (pNum === 5) {
+          if (pNum === 5 || pNum === 6) {
             renderThemeCards(rows);
             document.getElementById('resultsCard').classList.remove('hidden');
           }
@@ -2038,7 +2042,7 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
 async function approveAndProceed(completedPhase) {
   phaseState.statuses[completedPhase] = 'approved';
   const nextPhase = completedPhase + 1;
-  if (nextPhase <= 5) {
+  if (nextPhase <= 6) {
     phaseState.currentPhase = nextPhase;
     phaseState.statuses[nextPhase] = 'processing';
     savePhaseState();
@@ -2046,7 +2050,7 @@ async function approveAndProceed(completedPhase) {
     updatePhaseBadge();
     await sendPhaseToWebhook(nextPhase);
   } else {
-    phaseState.currentPhase = 5;
+    phaseState.currentPhase = 6;
     savePhaseState();
     renderPhaseCards();
     showToast('🎉 All phases complete! Final report is ready.');
@@ -2188,6 +2192,72 @@ function renderPhase4Output(rows) {
   return html;
 }
 
+function renderPhase6Output(rows) {
+  if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No narrative report data found.</div>';
+  const parsed = parseGvizRows(rows);
+  if (parsed.length === 0) return '<div style="color:var(--text-dim);">No parsed themes available for reporting.</div>';
+  
+  const rq = state.researchQuestion || 'our study objective';
+  
+  let html = `
+    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 12px; padding: 24px; color: var(--text-primary); line-height: 1.6; font-size: 14px;">
+      <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; font-weight: 700; color: var(--accent-blue); display: flex; align-items: center; gap: 8px;">
+        📝 Phase 6: Qualitative Narrative Findings
+      </h3>
+      <p style="margin-bottom: 20px; font-style: italic; color: var(--text-secondary); background: rgba(255,255,255,0.02); padding: 12px; border-left: 3px solid var(--accent-blue); border-radius: 4px;">
+        This findings narrative has been woven together to address your core research question: <strong>"${rq}"</strong>.
+      </p>
+      
+      <p style="margin-bottom: 20px;">
+        A systematic, reflexive thematic analysis of participant responses was conducted. Immersive familiarization, coding, and conceptual mapping led to the construction of <strong>${parsed.length} primary themes</strong>: 
+        ${parsed.map((t, i) => `<span style="font-weight: 600; color: var(--accent-purple);">${i+1}. ${t.name}</span>`).join(', ')}. 
+        These themes function cohesively together to describe the key qualitative dimensions of the dataset, representing patterns of shared meaning built around central organizing concepts.
+      </p>
+  `;
+  
+  parsed.forEach((t, idx) => {
+    const subList = t.subthemes && t.subthemes.length > 0
+      ? `Specifically, this concept comprises ${t.subthemes.length} subthemes: ${t.subthemes.map(s => `<em>${s.name}</em> (${s.detail || 'detailed facet'})`).join(', ')}.`
+      : '';
+      
+    html += `
+      <div style="margin-top: 24px; border-top: 1px solid var(--border-light); padding-top: 20px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: var(--accent-pink);">
+          Theme ${idx+1}: ${t.name}
+        </h4>
+        <p style="margin-bottom: 12px; color: var(--text-secondary);">
+          <strong>Conceptual Essence & Scope:</strong> ${t.explanation || 'No detailed scope defined.'}
+        </p>
+        ${subList ? `<p style="margin-bottom: 12px; color: var(--text-secondary);">${subList}</p>` : ''}
+    `;
+    
+    if (t.quotes && t.quotes.length > 0) {
+      html += `<div style="display:flex; flex-direction:column; gap:10px; margin: 16px 0; padding-left: 16px; border-left: 2px solid rgba(244,63,94,0.3);">`;
+      t.quotes.forEach(q => {
+        html += `
+          <div style="font-style: italic; font-size: 13px; color: var(--text-primary); line-height: 1.5;">
+            "${q.text}" 
+            <span style="font-size: 11px; font-style: normal; color: var(--text-muted); display: block; margin-top: 4px;">
+              — Respondent: ${q.email || 'Anonymous'}
+            </span>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
+    
+    html += `</div>`;
+  });
+  
+  html += `
+      <div style="margin-top: 24px; border-top: 2px dashed var(--border); padding-top: 20px; font-size: 13px; color: var(--text-muted); text-align: center;">
+        💡 <strong>Analytical Conclusion:</strong> The thematic map presented above provides a structured response to the research inquiry, ensuring empirical claims are backed by rigorous traceability back to verbatim participant statements.
+      </div>
+    </div>
+  `;
+  return html;
+}
+
 async function fetchPhaseRows(phaseNum) {
   const spreadsheetId = BACKEND_CONFIG.phaseSpreadsheets[phaseNum];
   if (!spreadsheetId) throw new Error("No spreadsheet configured for this phase");
@@ -2239,12 +2309,13 @@ function getPhaseOutputHTML(phaseNum) {
     if (phaseNum === 4) return renderPhase4Output(outputData);
     if (phaseNum === 5) {
       return `
-        <div style="color:#10B981; margin-bottom:12px;">✅ Phase 5 complete! Structured narrative and theme cards are rendered below.</div>
+        <div style="color:#10B981; margin-bottom:12px;">✅ Phase 5 complete! Themes are defined and named.</div>
         <div style="font-size:12px; color:var(--text-muted);">
-          Total Themes detected: <strong>${parseGvizRows(outputData).length}</strong>
+          Total Themes defined: <strong>${parseGvizRows(outputData).length}</strong>
         </div>
       `;
     }
+    if (phaseNum === 6) return renderPhase6Output(outputData);
   } catch(e) {
     return `<div style="color:var(--text-dim);">Error rendering output data: ${e.message}</div>`;
   }
@@ -2279,7 +2350,7 @@ function renderPhaseCards() {
         <div class="phase-card__output" id="phaseOutput_${phase.num}">
           ${getPhaseOutputHTML(phase.num)}
         </div>
-        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
+        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 6 ? phase.num + 1 : '— Complete'}</button>` : ''}
       </div>
     `;
 
@@ -2364,7 +2435,9 @@ async function autoDiscoverThemes(spreadsheetId) {
     'Sheet1',
     'Themes',
     'Phase 5',
-    'PHASE 5: Narrative Report'
+    'PHASE 5: Narrative Report',
+    'Phase 6',
+    'PHASE 6: Narrative Report'
   ];
   
   let lastError = null;
@@ -2706,7 +2779,7 @@ function renderAuditTrail(trailString) {
 }
 
 function setStepperState(currentStepIndex) {
-  const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+  const steps = ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'];
   steps.forEach((stepId, index) => {
     const stepEl = document.getElementById(stepId);
     if (!stepEl) return;
@@ -2728,11 +2801,12 @@ function setStepperState(currentStepIndex) {
 
 function getStepActiveText(stepNum) {
   switch (stepNum) {
-    case 1: return 'Validity screening active...';
+    case 1: return 'Familiarization active...';
     case 2: return 'Generating initial codes...';
     case 3: return 'Synthesizing candidate themes...';
     case 4: return 'Refining themes against data...';
-    case 5: return 'Writing final report...';
+    case 5: return 'Defining and naming themes...';
+    case 6: return 'Writing final report...';
     default: return 'Processing...';
   }
 }
