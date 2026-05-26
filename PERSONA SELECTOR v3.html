@@ -458,6 +458,10 @@
   }
   .btn-proceed:hover { transform: translateY(-2px); }
   .btn-proceed:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-generate:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: var(--text-muted) !important;
+  }
 
   /* ===================== PHASE REVIEW CARDS ===================== */
   .phase-card {
@@ -1021,13 +1025,52 @@
 <nav class="app-nav">
   <div class="app-nav__inner">
     <div class="app-nav__brand">Thematic Analysis</div>
-    <button class="app-nav__tab active" id="navTabSetup" onclick="switchAppTab('setup')">🧬 Persona Setup</button>
+    <button class="app-nav__tab active" id="navTabContext" onclick="switchAppTab('context')">📋 Project Context</button>
+    <button class="app-nav__tab" id="navTabSetup" onclick="switchAppTab('setup')">🧬 Persona Setup</button>
     <button class="app-nav__tab" id="navTabDashboard" onclick="switchAppTab('dashboard')">📊 Analysis Dashboard <span class="nav-badge" id="phaseBadge" style="display:none;">—</span></button>
   </div>
 </nav>
 
-<!-- ============ TAB 1: PERSONA SETUP ============ -->
-<div class="app-tab-panel active" id="panelSetup">
+<!-- ============ TAB 1: PROJECT CONTEXT ============ -->
+<div class="app-tab-panel active" id="panelContext">
+  <div class="container select">
+    <div class="header">
+      <div class="header__eyebrow">Qualitative Research Parameters</div>
+      <h1 class="header__title">Define Project Context & Goals</h1>
+      <p class="header__sub">Provide the guiding research question and background context. These will be automatically incorporated into the persona's analytical directive to target your specific dataset.</p>
+    </div>
+
+    <div class="config-grid" style="grid-template-columns: 1fr; gap: 24px;">
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px; padding: 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+        <div class="section-label" style="margin-top:0;">1. Research Question or Goal</div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          What specific research question or analytical goal is guiding this thematic analysis?
+        </div>
+        <textarea id="inputResearchQuestion" placeholder="e.g., What has been the biggest challenge for researchers in Technology Transfer?" style="width: 100%; height: 100px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 8px; padding: 16px; color: var(--text-primary); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical; box-sizing: border-box; margin-bottom: 28px; outline: none; transition: border-color 0.2s;" oninput="saveContextData()"></textarea>
+
+        <div class="section-label" style="margin-top:0;">2. Project Context & Study Background</div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Provide details about the dataset, participant profiles, institutional settings, or any other background information that the analytical engine needs to understand.
+        </div>
+        <textarea id="inputProjectContext" placeholder="e.g., This thematic analysis is conducted on interview responses from 10 technology transfer officers at major research universities. The study aims to understand systemic bottlenecks in university commercialization." style="width: 100%; height: 160px; background: var(--bg-void); border: 1px solid var(--border); border-radius: 8px; padding: 16px; color: var(--text-primary); font-family: inherit; font-size: 14px; line-height: 1.5; resize: vertical; box-sizing: border-box; outline: none; transition: border-color 0.2s;" oninput="saveContextData()"></textarea>
+      </div>
+    </div>
+    
+    <div style="margin-top: 32px; text-align: right;">
+      <button class="btn-proceed" onclick="switchAppTab('setup')" style="display: inline-block; width: auto; padding: 14px 40px; background: var(--accent-blue); font-weight:600; border-radius:8px; border:none; color:white; cursor:pointer;">
+        <span>Next: Select Persona 🧬</span>
+      </button>
+    </div>
+
+    <div class="footer">
+      Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Guba & Lincoln (1994, 2005) · Boyatzis (1998)<br>
+      Persona architecture designed for defensible automated thematic analysis
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 2: PERSONA SETUP ============ -->
+<div class="app-tab-panel" id="panelSetup">
 
   <!-- SELECT SCREEN -->
   <div class="container select" id="selectScreen">
@@ -1083,12 +1126,17 @@
 
     <!-- EDITABLE PROMPT PREVIEW -->
     <div class="prompt-editor-section" id="promptEditorSection">
-      <div class="prompt-editor__label">Generated Persona Prompt</div>
-      <div class="prompt-editor__desc">
-        Review and customize the analytical directive below. This prompt will be sent to the backend engine to guide Phase 1 of the Braun & Clarke thematic analysis pipeline.
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div class="prompt-editor__label" style="margin-bottom:0;">Generated Persona Prompt</div>
+        <button class="btn-generate" onclick="clickGeneratePrompt()" style="background: rgba(255,255,255,0.04); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; color: var(--text-primary); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+          <span>✨ Generate Persona Prompt</span>
+        </button>
       </div>
-      <textarea class="prompt-editor__textarea" id="promptTextarea" spellcheck="false"></textarea>
-      <button class="btn-proceed" id="btnProceed" onclick="proceedToAnalysis()" style="background: var(--persona-color, var(--accent-blue));">
+      <div class="prompt-editor__desc">
+        Review and customize the analytical directive below. This prompt is generated based on your research question, project context, continua settings, and selected lenses. Click "Generate Persona Prompt" to create or reset it, and customize it freely.
+      </div>
+      <textarea class="prompt-editor__textarea" id="promptTextarea" spellcheck="false" placeholder="Configure your parameters and click 'Generate Persona Prompt' above to create the analytical directive..."></textarea>
+      <button class="btn-proceed" id="btnProceed" onclick="proceedToAnalysis()" style="background: var(--persona-color, var(--accent-blue)); margin-top: 16px;">
         <span>🚀 Proceed to Analysis</span>
         <div class="spinner hidden" id="proceedSpinner"></div>
       </button>
@@ -1239,7 +1287,10 @@ let state = {
   selectedId: null,
   dials: {},
   activeLenses: [],
-  warnings: []
+  warnings: [],
+  researchQuestion: '',
+  projectContext: '',
+  savedPrompt: ''
 };
 
 function getPersona() { return PERSONAS.find(p => p.id === state.selectedId); }
@@ -1293,15 +1344,23 @@ function renderSelect() {
 }
 
 // ===================== SELECT PERSONA =====================
-function selectPersona(id) {
+function selectPersona(id, isRestore = false) {
   const p = PERSONAS.find(x => x.id === id);
+  if (!p) return;
+  
   state.selectedId = id;
-  state.dials = { ...p.dials };
-  state.activeLenses = [];
-  state.warnings = [];
+  if (!isRestore) {
+    state.dials = { ...p.dials };
+    state.activeLenses = [];
+    state.warnings = [];
+    state.savedPrompt = '';
+    const textarea = document.getElementById('promptTextarea');
+    if (textarea) textarea.value = '';
+  }
+  
   document.getElementById('selectScreen').classList.add('hidden');
   document.getElementById('configScreen').classList.add('active');
-  renderConfig();
+  renderConfig(isRestore);
 }
 
 function goBack() {
@@ -1310,7 +1369,7 @@ function goBack() {
 }
 
 // ===================== RENDER: CONFIG =====================
-function renderConfig() {
+function renderConfig(isRestore = false) {
   const p = getPersona();
   document.documentElement.style.setProperty('--persona-color', p.color);
   document.getElementById('cfgIcon').textContent = p.icon;
@@ -1324,8 +1383,57 @@ function renderConfig() {
   renderCitation();
   renderSummary();
   renderWarnings();
-  // Populate the editable prompt preview
-  setTimeout(populatePromptEditor, 100);
+  
+  if (isRestore && state.savedPrompt) {
+    const textarea = document.getElementById('promptTextarea');
+    if (textarea) textarea.value = state.savedPrompt;
+  }
+  
+  saveAppState();
+}
+
+function saveAppState() {
+  localStorage.setItem('n8n_ta_app_state', JSON.stringify(state));
+}
+
+function loadAppState() {
+  try {
+    const saved = localStorage.getItem('n8n_ta_app_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.researchQuestion !== undefined) state.researchQuestion = parsed.researchQuestion;
+      if (parsed.projectContext !== undefined) state.projectContext = parsed.projectContext;
+      if (parsed.selectedId !== undefined) state.selectedId = parsed.selectedId;
+      if (parsed.dials !== undefined) state.dials = parsed.dials;
+      if (parsed.activeLenses !== undefined) state.activeLenses = parsed.activeLenses;
+      if (parsed.warnings !== undefined) state.warnings = parsed.warnings;
+      if (parsed.savedPrompt !== undefined) state.savedPrompt = parsed.savedPrompt;
+    }
+  } catch(e) {
+    console.error('Error loading app state:', e);
+  }
+  
+  const rqInput = document.getElementById('inputResearchQuestion');
+  const pcInput = document.getElementById('inputProjectContext');
+  if (rqInput) rqInput.value = state.researchQuestion || '';
+  if (pcInput) pcInput.value = state.projectContext || '';
+  
+  if (state.selectedId) {
+    selectPersona(state.selectedId, true);
+  }
+}
+
+function saveContextData() {
+  state.researchQuestion = document.getElementById('inputResearchQuestion').value;
+  state.projectContext = document.getElementById('inputProjectContext').value;
+  saveAppState();
+}
+
+function clickGeneratePrompt() {
+  populatePromptEditor();
+  state.savedPrompt = document.getElementById('promptTextarea').value;
+  saveAppState();
+  showToast('✨ Persona prompt generated based on your settings!');
 }
 
 function renderDials() {
@@ -1618,6 +1726,21 @@ When these concepts appear in the data — even implicitly — you MUST code the
     section7 = 'No additional sensitizing frameworks are active. Your analysis is guided solely by your epistemological stance and Saldaña method profile.';
   }
 
+  let contextSection = '';
+  if (state.researchQuestion || state.projectContext) {
+    contextSection = `
+═══════════════════════════════════════════════════════════════
+SECTION 1.5: RESEARCH QUESTION & PROJECT CONTEXT
+═══════════════════════════════════════════════════════════════
+${state.researchQuestion ? `• RESEARCH QUESTION:
+  ${state.researchQuestion}` : ''}
+${state.projectContext ? `• STUDY CONTEXT & DATASET DETAILS:
+  ${state.projectContext}` : ''}
+
+You MUST align your analytical insights and interpretations with this research question and study context. Do not perform the analysis in a vacuum; ensure your codes and explanations address these specific parameters.
+`;
+  }
+
   // ── Assemble the template string body (what goes inside the backticks) ──
   const body = `
 ═══════════════════════════════════════════════════════════════
@@ -1630,7 +1753,7 @@ Your dial configuration (0–100 scale):
   • Orientation: ${eff.orientation} (Experiential 0 ←→ Critical 100)
   • Direction: ${eff.direction} (Inductive 0 ←→ Deductive 100)
   • Depth: ${eff.depth} (Semantic 0 ←→ Latent 100)
-
+${contextSection}`;
 ═══════════════════════════════════════════════════════════════
 SECTION 2: EPISTEMOLOGICAL STANCE (Dial: ${eff.epistemology}/100)
 ═══════════════════════════════════════════════════════════════
@@ -1771,8 +1894,11 @@ function showToast(msg) {
 
 // ===================== APP TAB NAVIGATION =====================
 function switchAppTab(tabName) {
+  document.getElementById('panelContext').classList.toggle('active', tabName === 'context');
   document.getElementById('panelSetup').classList.toggle('active', tabName === 'setup');
   document.getElementById('panelDashboard').classList.toggle('active', tabName === 'dashboard');
+  
+  document.getElementById('navTabContext').classList.toggle('active', tabName === 'context');
   document.getElementById('navTabSetup').classList.toggle('active', tabName === 'setup');
   document.getElementById('navTabDashboard').classList.toggle('active', tabName === 'dashboard');
   
@@ -2681,7 +2807,18 @@ async function pollSheetData() {
 // ===================== INIT =====================
 renderSelect();
 loadPhaseState();
+loadAppState();
 updatePhaseBadge();
+switchAppTab('context');
+
+// Add listener to save prompt edits dynamically
+const textInputArea = document.getElementById('promptTextarea');
+if (textInputArea) {
+  textInputArea.addEventListener('input', () => {
+    state.savedPrompt = textInputArea.value;
+    saveAppState();
+  });
+}
 
 // ===================== FULLSCREEN BUTTON =====================
 const btnFullscreen = document.getElementById('btnFullscreen');
