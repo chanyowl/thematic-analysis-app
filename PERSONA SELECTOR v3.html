@@ -2610,26 +2610,24 @@ function resetPhaseState() {
 }
 
 async function triggerPhaseRun(phaseNum) {
-  if (confirm(`Are you sure you want to trigger Phase ${phaseNum} run? This will send the request to the n8n backend.`)) {
-    phaseState.statuses[phaseNum] = 'processing';
-    savePhaseState();
-    renderPhaseCards();
-    
-    const promptText = document.getElementById('promptTextarea')?.value || '';
-    
-    const btn = document.querySelector(`#phaseCard_${phaseNum} .btn-trigger-run`);
-    const originalText = btn ? btn.innerHTML : '🚀 Trigger/Re-run Phase';
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = '⏳ Triggering...';
-    }
-    
-    await sendPhaseToWebhook(phaseNum, promptText);
-    
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    }
+  phaseState.statuses[phaseNum] = 'processing';
+  savePhaseState();
+  renderPhaseCards();
+  
+  const promptText = document.getElementById('promptTextarea')?.value || '';
+  
+  const btn = document.querySelector(`#phaseCard_${phaseNum} .btn-trigger-run`);
+  const originalText = btn ? btn.innerHTML : '🚀 Trigger/Re-run Phase';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Triggering...';
+  }
+  
+  await sendPhaseToWebhook(phaseNum, promptText);
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
 }
 
