@@ -1153,12 +1153,17 @@
 <!-- ============ TAB 2: ANALYSIS DASHBOARD ============ -->
 <div class="app-tab-panel" id="panelDashboard">
   <div class="container" id="dashboardScreen">
-    <div class="config-header" style="margin-bottom: 32px;">
-      <div class="config-header__icon" id="dashIcon">📊</div>
-      <div>
-        <div class="config-header__name" id="dashName">Thematic Analysis Dashboard</div>
-        <div class="config-header__paradigm" id="dashParadigm">Phase-by-Phase Human Review Pipeline</div>
+    <div class="config-header" style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div class="config-header__icon" id="dashIcon">📊</div>
+        <div>
+          <div class="config-header__name" id="dashName">Thematic Analysis Dashboard</div>
+          <div class="config-header__paradigm" id="dashParadigm">Phase-by-Phase Human Review Pipeline</div>
+        </div>
       </div>
+      <button class="btn-refresh-sheet" id="btnFetchAll" onclick="fetchAllPhasesData()" style="margin: 0; padding: 10px 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+        🔄 Fetch All Phases Data
+      </button>
     </div>
 
     <!-- Phase Cards -->
@@ -2305,13 +2310,12 @@ function getPhaseOutputHTML(phaseNum) {
   const outputData = phaseState.outputs[phaseNum];
   
   if (status === 'pending') {
-    return `<div style="text-align:center; color:var(--text-dim); padding: 12px 0;">Waiting for previous phases to complete.</div>`;
+    return `<div style="text-align:center; color:var(--text-dim); padding: 12px 0;">Waiting for previous phases to complete. Use the Fetch button below to test sheet data.</div>`;
   }
   if (status === 'processing') {
     return `
       <div style="text-align:center; color:var(--accent-blue); padding: 12px 0;">
-        ⏳ Backend is processing this phase. Results will appear here when ready.<br><br>
-        <button class="btn-refresh-sheet" onclick="pollPhaseData(${phaseNum})">🔄 Check for Results</button>
+        ⏳ Backend is processing this phase. Results will appear here when ready.
       </div>
     `;
   }
@@ -2319,7 +2323,6 @@ function getPhaseOutputHTML(phaseNum) {
   if (!outputData || outputData.length === 0) {
     return `
       <div style="text-align:center; color:var(--warning); padding: 12px 0;">No local data cached for this phase.</div>
-      <button class="btn-refresh-sheet" style="margin: 10px auto 0;" onclick="pollPhaseData(${phaseNum})">🔄 Poll Spreadsheet</button>
     `;
   }
   
@@ -2363,7 +2366,10 @@ function renderPhaseCards() {
         <div class="phase-card__output" id="phaseOutput_${phase.num}">
           ${getPhaseOutputHTML(phase.num)}
         </div>
-        ${status === 'ready' ? `<button class="btn-approve" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
+        <div class="phase-card__controls" style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end; align-items: center; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+          <button class="btn-refresh-sheet" style="margin: 0; padding: 6px 12px; font-size: 12px;" onclick="pollPhaseData(${phase.num})">🔄 Fetch/Refresh Data</button>
+          ${status === 'ready' ? `<button class="btn-approve" style="margin: 0; padding: 6px 12px; font-size: 12px;" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
+        </div>
       </div>
     `;
 
@@ -2385,21 +2391,71 @@ async function pollPhaseData(phaseNum) {
   try {
     const rows = await fetchPhaseRows(phaseNum);
     if (rows && rows.length > 1) {
-      phaseState.statuses[phaseNum] = 'ready';
+      if (phaseState.statuses[phaseNum] !== 'approved') {
+        phaseState.statuses[phaseNum] = 'ready';
+      }
       phaseState.outputs[phaseNum] = rows;
       savePhaseState();
       renderPhaseCards();
-      showToast(`Phase ${phaseNum} output detected!`);
+      showToast(`Phase ${phaseNum} data fetched successfully!`);
       
       if (phaseNum === 5) {
         renderThemeCards(rows);
         document.getElementById('resultsCard').classList.remove('hidden');
       }
     } else {
-      showToast('No results found yet. The backend may still be processing.');
+      showToast('No data rows found in this spreadsheet yet.');
     }
   } catch(e) {
-    showToast(`Check failed: ${e.message}`);
+    showToast(`Fetch failed: ${e.message}`);
+  }
+}
+
+async function fetchAllPhasesData() {
+  const btn = document.getElementById('btnFetchAll');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Fetching All...';
+  }
+  
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (let i = 1; i <= 5; i++) {
+    try {
+      const rows = await fetchPhaseRows(i);
+      if (rows && rows.length > 1) {
+        if (phaseState.statuses[i] !== 'approved') {
+          phaseState.statuses[i] = 'ready';
+        }
+        phaseState.outputs[i] = rows;
+        successCount++;
+      }
+    } catch(e) {
+      console.warn(`Could not fetch data for Phase ${i}:`, e.message);
+      failCount++;
+    }
+  }
+  
+  savePhaseState();
+  renderPhaseCards();
+  
+  const hasFinalData = (phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved');
+  const finalOutput = phaseState.outputs[5];
+  if (hasFinalData && finalOutput) {
+    renderThemeCards(finalOutput);
+    document.getElementById('resultsCard').classList.remove('hidden');
+  }
+  
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '🔄 Fetch All Phases Data';
+  }
+  
+  if (successCount > 0) {
+    showToast(`Successfully fetched data for ${successCount} phase(s)!`);
+  } else {
+    showToast('Failed to fetch data for any phases. Please verify spreadsheets share settings.');
   }
 }
 
