@@ -1839,9 +1839,9 @@ const BACKEND_CONFIG = {
   questionKeyword: 'biggest challenge',
   phaseSpreadsheets: {
     1: '1Nyv8aWtK_KHX0sS9lcDTNA7orT-oddsorJX3Cic7vx8',
-    2: '1SnHrsnz00vDBqjNvmEydo176FjKU5ZYji3KXOmBjjSc',
-    3: '1126H_UiwUCAsGW0xk3tPqDYPUY7NgKQsbTohJEP6afI',
-    4: '1_Gw3oO6xhTUfOOjDus5myHG04_5srb4PB5se6wxXmyQ',
+    2: '1126H_UiwUCAsGW0xk3tPqDYPUY7NgKQsbTohJEP6afI',
+    3: '1_Gw3oO6xhTUfOOjDus5myHG04_5srb4PB5se6wxXmyQ',
+    4: '1xABtw_CZqKFcZqjlIAG3LdtB8webTN2-Zd47b-pcUYo',
     5: '1Tg05bWvVc4tRYWHREbIgFsOltKx3fv0JQNqCDXLCVK8'
   }
 };
@@ -2271,11 +2271,23 @@ async function fetchPhaseRows(phaseNum) {
   const spreadsheetId = BACKEND_CONFIG.phaseSpreadsheets[phaseNum];
   if (!spreadsheetId) throw new Error("No spreadsheet configured for this phase");
   
-  // Try candidates or first tab
-  const candidates = ['', 'Sheet1', 'A - Agent', 'B - Agent', 'C - Agent', 'IRR - Cosolidator', 'Final Themes', 'Themes'];
-  let lastError = null;
+  // Define default tab name for each phase based on user config:
+  // Phase 1 -> 'Data familiarization'
+  // Phase 2 to 5 -> 'A - Agent'
+  const defaultTabs = {
+    1: 'Data familiarization',
+    2: 'A - Agent',
+    3: 'A - Agent',
+    4: 'A - Agent',
+    5: 'A - Agent'
+  };
   
-  for (const name of candidates) {
+  const primaryTab = defaultTabs[phaseNum];
+  const candidates = [primaryTab, '', 'A - Agent', 'Data familiarization', 'Sheet1', 'B - Agent', 'C - Agent', 'IRR - Cosolidator', 'Final Themes', 'Themes'];
+  const uniqueCandidates = [...new Set(candidates)];
+  
+  let lastError = null;
+  for (const name of uniqueCandidates) {
     try {
       const rows = await fetchGoogleSheetRows(spreadsheetId, name);
       if (rows && rows.length > 1) {
