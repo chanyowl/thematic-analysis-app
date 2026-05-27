@@ -2072,6 +2072,55 @@ async function approveAndProceed(completedPhase) {
 }
 
 // ===================== PHASE OUTPUT RENDERERS =====================
+// ===================== ANONYMIZER HELPERS =====================
+const respondentAnonymizerMap = new Map();
+
+function anonymizeEmail(emailStr) {
+  if (!emailStr) return 'Anonymous';
+  const clean = emailStr.trim().toLowerCase();
+  
+  // If it's already an anonymous ID format like R01, R02, etc., return it.
+  if (/^r\d+$/i.test(clean)) {
+    return clean.toUpperCase();
+  }
+  
+  // If it looks like a valid email (contains @), map it.
+  if (clean.includes('@')) {
+    if (!respondentAnonymizerMap.has(clean)) {
+      const nextNum = respondentAnonymizerMap.size + 1;
+      const rId = `R${nextNum.toString().padStart(2, '0')}`;
+      respondentAnonymizerMap.set(clean, rId);
+    }
+    return respondentAnonymizerMap.get(clean);
+  }
+  
+  // Fallback: If it's a specific string like 'Respondent', 'Anonymous', keep it.
+  if (clean === 'respondent' || clean === 'anonymous') {
+    return 'Anonymous';
+  }
+  
+  // Otherwise, if it has any characters, map it to ensure privacy.
+  if (clean.length > 0) {
+    if (!respondentAnonymizerMap.has(clean)) {
+      const nextNum = respondentAnonymizerMap.size + 1;
+      const rId = `R${nextNum.toString().padStart(2, '0')}`;
+      respondentAnonymizerMap.set(clean, rId);
+    }
+    return respondentAnonymizerMap.get(clean);
+  }
+  
+  return 'Anonymous';
+}
+
+function anonymizeTextWithEmails(text) {
+  if (!text) return '';
+  // Match email addresses
+  return text.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, (email) => {
+    return anonymizeEmail(email);
+  });
+}
+
+// ===================== PHASE OUTPUT RENDERERS =====================
 function renderPhase1Output(rows) {
   if (!rows || rows.length <= 1) return '<div style="color:var(--text-dim);">No screened responses found.</div>';
   const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
@@ -2084,7 +2133,8 @@ function renderPhase1Output(rows) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     if (!row || row.length === 0) continue;
-    const email = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const rawEmail = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const email = anonymizeEmail(rawEmail);
     const answer = (answerIdx !== -1 && answerIdx < row.length) ? row[answerIdx] : '';
     const verdict = (verdictIdx !== -1 && verdictIdx < row.length && row[verdictIdx]) ? row[verdictIdx].toString().trim().toUpperCase() : 'VALID';
     const explanation = (explanationIdx !== -1 && explanationIdx < row.length) ? row[explanationIdx] : '';
@@ -2120,7 +2170,8 @@ function renderPhase2Output(rows) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     if (!row || row.length === 0) continue;
-    const email = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const rawEmail = (emailIdx !== -1 && emailIdx < row.length) ? row[emailIdx] : 'Respondent';
+    const email = anonymizeEmail(rawEmail);
     const code = (codeIdx !== -1 && codeIdx < row.length) ? row[codeIdx] : 'Uncoded';
     const explanation = (expIdx !== -1 && expIdx < row.length) ? row[expIdx] : '';
     const quote = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
@@ -2154,7 +2205,8 @@ function renderPhase3Output(rows) {
     if (!row || row.length === 0) continue;
     const label = (labelIdx !== -1 && labelIdx < row.length) ? row[labelIdx] : '';
     const rationale = (rationalIdx !== -1 && rationalIdx < row.length) ? row[rationalIdx] : '';
-    const initialCodes = (initialIdx !== -1 && initialIdx < row.length) ? row[initialIdx] : '';
+    const rawInitialCodes = (initialIdx !== -1 && initialIdx < row.length) ? row[initialIdx] : '';
+    const initialCodes = anonymizeTextWithEmails(rawInitialCodes);
     const quotes = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
 
     html += `
@@ -2187,7 +2239,8 @@ function renderPhase4Output(rows) {
     if (!row || row.length === 0) continue;
     const label = (labelIdx !== -1 && labelIdx < row.length) ? row[labelIdx] : '';
     const rationale = (rationalIdx !== -1 && rationalIdx < row.length) ? row[rationalIdx] : '';
-    const trail = (trailIdx !== -1 && trailIdx < row.length) ? row[trailIdx] : '';
+    const rawTrail = (trailIdx !== -1 && trailIdx < row.length) ? row[trailIdx] : '';
+    const trail = anonymizeTextWithEmails(rawTrail);
     const quotes = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
 
     html += `
@@ -2618,7 +2671,8 @@ function parseGvizRows(rows) {
       const eList = emails.split(/\||;/).map(e => e.trim()).filter(Boolean);
       
       qList.forEach((qText, idx) => {
-        const email = eList[idx] || eList[0] || 'Respondent';
+        const rawEmail = eList[idx] || eList[0] || 'Respondent';
+        const email = anonymizeEmail(rawEmail);
         // Avoid duplicate quotes
         if (!themeObj.quotes.some(q => q.text === qText)) {
           themeObj.quotes.push({ text: qText, email });
@@ -2822,12 +2876,12 @@ function renderAuditTrail(trailString) {
         if (match) {
           const text = match[1];
           const type = match[2];
-          const email = match[3];
+          const email = anonymizeEmail(match[3]);
           html += `<span class="audit-pill audit-pill--initial" title="Source: ${email} (${type})">
             ${text} <small class="pill-meta">${type}</small>
           </span>`;
         } else {
-          html += `<span class="audit-pill audit-pill--initial">${c}</span>`;
+          html += `<span class="audit-pill audit-pill--initial">${anonymizeTextWithEmails(c)}</span>`;
         }
       });
       html += `</div></div>`;
