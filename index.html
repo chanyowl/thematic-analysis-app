@@ -2126,6 +2126,28 @@ function renderPhase1Output(rows) {
   const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
   const emailIdx = headers.findIndex(h => h.includes('email'));
   const answerIdx = headers.findIndex(h => h.includes('answer'));
+  
+  // Fallback to narrative familiarization report if no standard survey columns are present
+  if (emailIdx === -1 && answerIdx === -1) {
+    let summaryText = '';
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row && row.length > 0 && row[0]) {
+        summaryText += `<p style="margin-bottom:12px; font-size:14px; line-height:1.6; color:var(--text-secondary); text-indent: 24px;">${row[0].toString().trim()}</p>`;
+      }
+    }
+    return `
+      <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-top: 8px;">
+        <h4 style="margin: 0 0 16px 0; color: var(--accent-blue); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          👁 Data Familiarization Insights
+        </h4>
+        <div style="border-left: 3px solid var(--accent-blue); padding-left: 16px; font-style: italic; background: rgba(255,255,255,0.01); padding: 16px; border-radius: 4px;">
+          ${summaryText || 'No familiarization notes provided.'}
+        </div>
+      </div>
+    `;
+  }
+  
   const verdictIdx = headers.findIndex(h => h.includes('verdict'));
   const explanationIdx = headers.findIndex(h => h.includes('explanation') || h.includes('desc') || h.includes('rationale'));
 
@@ -2232,6 +2254,7 @@ function renderPhase4Output(rows) {
   const rationalIdx = headers.findIndex(h => h.includes('rational') || h.includes('ratinale') || h.includes('explanation'));
   const trailIdx = headers.findIndex(h => h.includes('trail') || h.includes('code') || h.includes('method'));
   const quoteIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim'));
+  const verdictIdx = headers.findIndex(h => h.includes('verdict') || h.includes('status'));
 
   let html = `<div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">`;
   for (let i = 1; i < rows.length; i++) {
@@ -2242,10 +2265,22 @@ function renderPhase4Output(rows) {
     const rawTrail = (trailIdx !== -1 && trailIdx < row.length) ? row[trailIdx] : '';
     const trail = anonymizeTextWithEmails(rawTrail);
     const quotes = (quoteIdx !== -1 && quoteIdx < row.length) ? row[quoteIdx] : '';
+    const verdict = (verdictIdx !== -1 && verdictIdx < row.length && row[verdictIdx]) ? row[verdictIdx].toString().trim().toUpperCase() : '';
+
+    let badgeHTML = '';
+    if (verdict) {
+      const isRef = verdict.includes('REFINED');
+      const isConf = verdict.includes('CONFIRMED');
+      const badgeColor = isConf ? '#10B981' : (isRef ? '#60A5FA' : '#F59E0B');
+      const badgeBg = isConf ? 'rgba(16, 185, 129, 0.1)' : (isRef ? 'rgba(96, 165, 250, 0.1)' : 'rgba(245, 158, 11, 0.1)');
+      badgeHTML = `<span style="font-size:10px; font-weight:700; color:${badgeColor}; background:${badgeBg}; padding:2px 8px; border-radius:4px; margin-left: 8px;">${verdict}</span>`;
+    }
 
     html += `
       <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 8px; padding: 16px;">
-        <div style="font-size:15px; font-weight:700; color:var(--accent-pink); margin-bottom: 8px;">${label}</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <div style="font-size:15px; font-weight:700; color:var(--accent-pink);">${label}${badgeHTML}</div>
+        </div>
         ${rationale ? `<div style="font-size:12px; color:var(--text-secondary); margin-bottom: 8px;"><strong>Theme Rationale:</strong> ${rationale}</div>` : ''}
         
         <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px; border-top:1px solid rgba(255,255,255,0.04); padding-top:8px;">
@@ -2295,6 +2330,11 @@ function renderPhase5Output(rows) {
         <p style="margin-bottom: 12px; color: var(--text-secondary);">
           <strong>Conceptual Essence & Scope:</strong> ${t.explanation || 'No detailed scope defined.'}
         </p>
+        ${t.narrative ? `
+          <div style="margin-bottom: 16px; color: var(--text-primary); background: rgba(244,63,94,0.02); padding: 16px; border: 1px dashed rgba(244,63,94,0.15); border-radius: 8px;">
+            <strong>Narrative Discussion:</strong> ${t.narrative}
+          </div>
+        ` : ''}
         ${subList ? `<p style="margin-bottom: 12px; color: var(--text-secondary);">${subList}</p>` : ''}
     `;
     
@@ -2598,17 +2638,19 @@ function parseGvizRows(rows) {
   
   const headers = rows[0].map(h => (h || '').toString().toLowerCase().trim());
   
-  const themeIdx = headers.findIndex(h => h.includes('theme') && !h.includes('sub') && !h.includes('details') && !h.includes('expalnation') && !h.includes('explanation'));
-  const subthemeIdx = headers.findIndex(h => (h.includes('subtheme') || h.includes('sub-theme')) && !h.includes('details') && !h.includes('desc'));
-  const descIdx = headers.findIndex(h => h.includes('theme') && (h.includes('expalnation') || h.includes('explanation')));
-  const subDetailsIdx = headers.findIndex(h => (h.includes('subtheme') || h.includes('sub-theme')) && (h.includes('detail') || h.includes('desc') || h.includes('explanation')));
-  const trailIdx = headers.findIndex(h => h.includes('trail') || h.includes('method') || h.includes('saldana'));
-  const emailsIdx = headers.findIndex(h => h.includes('email'));
+  const themeIdx = headers.findIndex(h => h.includes('theme') && !h.includes('sub') && !h.includes('detail') && !h.includes('definition') && !h.includes('narrative') && !h.includes('rationale') && !h.includes('verdict'));
+  const subthemeIdx = headers.findIndex(h => (h.includes('subtheme') || h.includes('sub-theme') || h.includes('sub_theme') || h.includes('sub_themes')) && !h.includes('detail') && !h.includes('desc'));
+  const descIdx = headers.findIndex(h => h.includes('definition') || h.includes('organizing_concept') || h.includes('concept') || h.includes('explanation') || h.includes('rationale') || h.includes('desc'));
+  const subDetailsIdx = headers.findIndex(h => (h.includes('subtheme') || h.includes('sub-theme') || h.includes('sub_theme') || h.includes('sub_themes')) && (h.includes('detail') || h.includes('desc') || h.includes('explanation')));
+  const trailIdx = headers.findIndex(h => h.includes('trail') || h.includes('code_trail') || h.includes('method') || h.includes('saldana'));
+  const emailsIdx = headers.findIndex(h => h.includes('email') || h.includes('respondent'));
   const quotesIdx = headers.findIndex(h => h.includes('quote') || h.includes('verbatim') || h.includes('evidence'));
+  const narrativeIdx = headers.findIndex(h => h.includes('narrative'));
 
   const parsedThemes = [];
   let lastActiveThemeName = '';
   let lastActiveExplanation = '';
+  let lastActiveNarrative = '';
   let lastActiveTrail = '';
   
   for (let i = 1; i < rows.length; i++) {
@@ -2617,6 +2659,7 @@ function parseGvizRows(rows) {
     
     let themeName = (themeIdx !== -1 && themeIdx < row.length) ? row[themeIdx].toString().trim() : '';
     let explanation = (descIdx !== -1 && descIdx < row.length) ? row[descIdx].toString().trim() : '';
+    let narrative = (narrativeIdx !== -1 && narrativeIdx < row.length) ? row[narrativeIdx].toString().trim() : '';
     let trail = (trailIdx !== -1 && trailIdx < row.length) ? row[trailIdx].toString().trim() : '';
     
     const subthemeName = (subthemeIdx !== -1 && subthemeIdx < row.length) ? row[subthemeIdx].toString().trim() : '';
@@ -2628,10 +2671,12 @@ function parseGvizRows(rows) {
     if (!themeName) {
       themeName = lastActiveThemeName;
       if (!explanation) explanation = lastActiveExplanation;
+      if (!narrative) narrative = lastActiveNarrative;
       if (!trail) trail = lastActiveTrail;
     } else {
       lastActiveThemeName = themeName;
       lastActiveExplanation = explanation;
+      lastActiveNarrative = narrative;
       lastActiveTrail = trail;
     }
     
@@ -2642,6 +2687,7 @@ function parseGvizRows(rows) {
       themeObj = {
         name: themeName,
         explanation: explanation,
+        narrative: narrative,
         trail: trail,
         subthemes: [],
         quotes: []
@@ -2753,6 +2799,17 @@ function renderThemeCards(rows) {
         <div class="theme-explanation-box">${theme.explanation}</div>
       `;
       body.appendChild(expSec);
+    }
+    
+    // 1.5 Narrative Discussion Section
+    if (theme.narrative) {
+      const narrSec = document.createElement('div');
+      narrSec.className = 'theme-section';
+      narrSec.innerHTML = `
+        <div class="theme-section-title">Narrative Discussion</div>
+        <div class="theme-explanation-box" style="border-left-color: var(--accent-pink); background: rgba(244,63,94,0.02);">${theme.narrative}</div>
+      `;
+      body.appendChild(narrSec);
     }
     
     // 2. Subthemes Section
