@@ -1161,9 +1161,14 @@
           <div class="config-header__paradigm" id="dashParadigm">Phase-by-Phase Human Review Pipeline</div>
         </div>
       </div>
-      <button class="btn-refresh-sheet" id="btnFetchAll" onclick="fetchAllPhasesData()" style="margin: 0; padding: 10px 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px;">
-        🔄 Fetch All Phases Data
-      </button>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn-refresh-sheet" id="btnFetchAll" onclick="fetchAllPhasesData()" style="margin: 0; padding: 10px 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px;">
+          🔄 Fetch All
+        </button>
+        <button class="btn-refresh-sheet" onclick="resetPhaseState()" style="margin: 0; padding: 10px 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 13px; border: 1px solid rgba(239,68,68,0.2); background: rgba(239,68,68,0.05); color: #F87171;">
+          🗑 Reset Cache
+        </button>
+      </div>
     </div>
 
     <!-- Phase Cards -->
@@ -2497,10 +2502,26 @@ async function pollPhaseData(phaseNum) {
         document.getElementById('resultsCard').classList.remove('hidden');
       }
     } else {
-      showToast('No data rows found in this spreadsheet yet.');
+      phaseState.outputs[phaseNum] = null;
+      if (phaseState.statuses[phaseNum] !== 'processing') {
+        phaseState.statuses[phaseNum] = 'pending';
+      }
+      savePhaseState();
+      renderPhaseCards();
+      showToast(`Phase ${phaseNum} sheet is empty. Cache cleared.`);
     }
   } catch(e) {
-    showToast(`Fetch failed: ${e.message}`);
+    if (e.message.includes('No data rows found')) {
+      phaseState.outputs[phaseNum] = null;
+      if (phaseState.statuses[phaseNum] !== 'processing') {
+        phaseState.statuses[phaseNum] = 'pending';
+      }
+      savePhaseState();
+      renderPhaseCards();
+      showToast(`Phase ${phaseNum} sheet is empty. Cache cleared.`);
+    } else {
+      showToast(`Fetch failed: ${e.message}`);
+    }
   }
 }
 
@@ -2512,7 +2533,7 @@ async function fetchAllPhasesData() {
   }
   
   let successCount = 0;
-  let failCount = 0;
+  let clearedCount = 0;
   
   for (let i = 1; i <= 5; i++) {
     try {
@@ -2523,10 +2544,22 @@ async function fetchAllPhasesData() {
         }
         phaseState.outputs[i] = rows;
         successCount++;
+      } else {
+        phaseState.outputs[i] = null;
+        if (phaseState.statuses[i] !== 'processing') {
+          phaseState.statuses[i] = 'pending';
+        }
+        clearedCount++;
       }
     } catch(e) {
+      if (e.message.includes('No data rows found')) {
+        phaseState.outputs[i] = null;
+        if (phaseState.statuses[i] !== 'processing') {
+          phaseState.statuses[i] = 'pending';
+        }
+        clearedCount++;
+      }
       console.warn(`Could not fetch data for Phase ${i}:`, e.message);
-      failCount++;
     }
   }
   
@@ -2535,20 +2568,43 @@ async function fetchAllPhasesData() {
   
   const hasFinalData = (phaseState.statuses[5] === 'ready' || phaseState.statuses[5] === 'approved');
   const finalOutput = phaseState.outputs[5];
+  const resultsCard = document.getElementById('resultsCard');
   if (hasFinalData && finalOutput) {
     renderThemeCards(finalOutput);
-    document.getElementById('resultsCard').classList.remove('hidden');
+    if (resultsCard) resultsCard.classList.remove('hidden');
+  } else {
+    if (resultsCard) resultsCard.classList.add('hidden');
   }
   
   if (btn) {
     btn.disabled = false;
-    btn.innerHTML = '🔄 Fetch All Phases Data';
+    btn.innerHTML = '🔄 Fetch All';
   }
   
   if (successCount > 0) {
-    showToast(`Successfully fetched data for ${successCount} phase(s)!`);
+    showToast(`Successfully fetched ${successCount} phase(s). Cleared/empty: ${clearedCount}.`);
+  } else if (clearedCount > 0) {
+    showToast('All sheets are empty. Dashboard cache cleared.');
   } else {
     showToast('Failed to fetch data for any phases. Please verify spreadsheets share settings.');
+  }
+}
+
+function resetPhaseState() {
+  if (confirm("Are you sure you want to clear all cached dashboard data and reset all phases to pending?")) {
+    phaseState = {
+      currentPhase: 0,
+      statuses: { 1: 'pending', 2: 'pending', 3: 'pending', 4: 'pending', 5: 'pending' },
+      outputs: { 1: null, 2: null, 3: null, 4: null, 5: null }
+    };
+    savePhaseState();
+    renderPhaseCards();
+    updatePhaseBadge();
+    
+    const resultsCard = document.getElementById('resultsCard');
+    if (resultsCard) resultsCard.classList.add('hidden');
+    
+    showToast("Dashboard cache cleared successfully!");
   }
 }
 
