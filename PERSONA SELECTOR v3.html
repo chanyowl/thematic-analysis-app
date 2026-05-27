@@ -2281,14 +2281,14 @@ async function fetchPhaseRows(phaseNum) {
   // Phase 2 to 5 -> 'A - Agent'
   const defaultTabs = {
     1: 'Data familiarization',
-    2: 'A - Agent',
+    2: 'A -  Agent', // Note: Phase 2 sheet tab has double spaces in its name
     3: 'A - Agent',
     4: 'A - Agent',
     5: 'A - Agent'
   };
   
   const primaryTab = defaultTabs[phaseNum];
-  const candidates = [primaryTab, '', 'A - Agent', 'Data familiarization', 'Sheet1', 'B - Agent', 'C - Agent', 'IRR - Cosolidator', 'Final Themes', 'Themes'];
+  const candidates = [primaryTab, '', 'A -  Agent', 'A - Agent', 'Data familiarization', 'Sheet1', 'B - Agent', 'C - Agent', 'IRR - Cosolidator', 'Final Themes', 'Themes'];
   const uniqueCandidates = [...new Set(candidates)];
   
   let lastError = null;
