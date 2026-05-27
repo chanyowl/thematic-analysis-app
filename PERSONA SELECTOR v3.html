@@ -100,7 +100,7 @@
 
   .configure { display: none; }
   .configure.active { display: block; }
-  .select.hidden { display: none; }
+  .hidden { display: none !important; }
 
   .config-header { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; }
   .btn-back {
@@ -2466,6 +2466,7 @@ function renderPhaseCards() {
         </div>
         <div class="phase-card__controls" style="display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end; align-items: center; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
           <button class="btn-refresh-sheet" style="margin: 0; padding: 6px 12px; font-size: 12px;" onclick="pollPhaseData(${phase.num})">🔄 Fetch/Refresh Data</button>
+          <button class="btn-refresh-sheet btn-trigger-run" style="margin: 0; padding: 6px 12px; font-size: 12px; border-color: rgba(139,92,246,0.3); color: #C084FC;" onclick="triggerPhaseRun(${phase.num})">🚀 Trigger/Re-run Phase</button>
           ${status === 'ready' ? `<button class="btn-approve" style="margin: 0; padding: 6px 12px; font-size: 12px;" onclick="approveAndProceed(${phase.num})">✅ Approve & Proceed to Phase ${phase.num < 5 ? phase.num + 1 : '— Complete'}</button>` : ''}
         </div>
       </div>
@@ -2605,6 +2606,30 @@ function resetPhaseState() {
     if (resultsCard) resultsCard.classList.add('hidden');
     
     showToast("Dashboard cache cleared successfully!");
+  }
+}
+
+async function triggerPhaseRun(phaseNum) {
+  if (confirm(`Are you sure you want to trigger Phase ${phaseNum} run? This will send the request to the n8n backend.`)) {
+    phaseState.statuses[phaseNum] = 'processing';
+    savePhaseState();
+    renderPhaseCards();
+    
+    const promptText = document.getElementById('promptTextarea')?.value || '';
+    
+    const btn = document.querySelector(`#phaseCard_${phaseNum} .btn-trigger-run`);
+    const originalText = btn ? btn.innerHTML : '🚀 Trigger/Re-run Phase';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Triggering...';
+    }
+    
+    await sendPhaseToWebhook(phaseNum, promptText);
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
   }
 }
 
