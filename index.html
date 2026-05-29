@@ -1247,14 +1247,18 @@ function generatePersonaPrompt() {
 
   let contextSection = '';
   if (state.researchQuestion || state.projectContext) {
+    let parts = [];
+    if (state.researchQuestion) {
+      parts.push(`• RESEARCH QUESTION:\n  ${state.researchQuestion}\n\n  👉 CRITICAL MANDATE: You MUST align your analytical insights, coding decisions, and interpretations to actively answer the research question(s) above. Do not perform the analysis in a vacuum, nor simply repeat or paste the questions in your outputs without answering them; ensure every code, theme, and explanation you generate is directly geared toward answering these specific research questions.`);
+    }
+    if (state.projectContext) {
+      parts.push(`• STUDY CONTEXT & DATASET DETAILS:\n  ${state.projectContext}`);
+    }
     contextSection = `
 ═══════════════════════════════════════════════════════════════
 SECTION 7: RESEARCH QUESTION & PROJECT CONTEXT
 ═══════════════════════════════════════════════════════════════
-${state.researchQuestion ? `• RESEARCH QUESTION:\n  ${state.researchQuestion}` : ''}
-${state.projectContext ? `• STUDY CONTEXT & DATASET DETAILS:\n  ${state.projectContext}` : ''}
-
-You MUST align your analytical insights, coding decisions, and interpretations to actively answer the research question(s) provided. Do not perform the analysis in a vacuum, nor simply repeat or paste the questions in your outputs without answering them; ensure every code, theme, and explanation you generate is directly geared toward answering these specific research questions using the provided study context.
+${parts.join('\n\n')}
 `;
   }
 
