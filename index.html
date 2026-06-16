@@ -1500,9 +1500,7 @@ function populatePromptEditor() {
 
 // ===================== PROCEED TO ANALYSIS =====================
 async function proceedToAnalysis() {
-  console.log('[TA-DEBUG] proceedToAnalysis() called');
   const promptText = document.getElementById('promptTextarea').value.trim();
-  console.log('[TA-DEBUG] promptText length:', promptText.length);
   if (!promptText) { showToast('Prompt cannot be empty'); return; }
   
   phaseState.currentPhase = 1;
@@ -1530,8 +1528,6 @@ const BACKEND_CONFIG = {
 };
 
 async function sendPhaseToWebhook(phaseNum, promptText) {
-  console.log('[TA-DEBUG] sendPhaseToWebhook() called — Phase:', phaseNum);
-  console.log('[TA-DEBUG] Webhook URL:', BACKEND_CONFIG.webhookUrl);
   const spinner = document.getElementById('proceedSpinner');
   const btn = document.getElementById('btnProceed');
   if (spinner) spinner.classList.remove('hidden');
@@ -1553,18 +1549,12 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
     }
   };
 
-  console.log('[TA-DEBUG] Payload constructed:', JSON.stringify(payload).substring(0, 500));
-
   try {
-    console.log('[TA-DEBUG] Sending fetch POST to:', BACKEND_CONFIG.webhookUrl);
     const res = await fetch(BACKEND_CONFIG.webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    console.log('[TA-DEBUG] Response status:', res.status, res.statusText);
-    const responseText = await res.text();
-    console.log('[TA-DEBUG] Response body:', responseText.substring(0, 500));
     if (res.ok) {
       showToast(`🚀 Phase ${phaseNum} triggered successfully!`);
       phaseState.statuses[phaseNum] = 'processing';
@@ -1573,7 +1563,6 @@ async function sendPhaseToWebhook(phaseNum, promptText) {
       phaseState.statuses[phaseNum] = 'pending';
     }
   } catch (e) {
-    console.error('[TA-DEBUG] Fetch error:', e);
     showToast(`Failed to reach backend: ${e.message}`);
     phaseState.statuses[phaseNum] = 'pending';
   } finally {
