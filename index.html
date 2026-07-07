@@ -3759,7 +3759,27 @@ async function runSegmentation() {
 
     // 4. Send to webhook
     label.textContent = 'Sending to n8n...';
-    const webhookResult = await sendSegmentsToWebhook(output);
+    
+    // Format payload as a flat table for easier Google Sheets insertion via n8n
+    const flatRow = {
+      "Participant": `${output.metadata.respondent_id} — ${output.metadata.institution}`
+    };
+    
+    const qIds = [...new Set(output.segments.map(s => s.question_id))];
+    for (const qId of qIds) {
+      const segsForQ = output.segments.filter(s => s.question_id === qId);
+      const questionText = segsForQ[0].question_context;
+      const extracts = segsForQ.map(s => s.extract).join('\n\n');
+      // Use the actual question text as the column key
+      flatRow[questionText] = extracts;
+    }
+
+    const webhookPayload = {
+      phase: 'n8n_PHASE0',
+      data: [flatRow] // Sent as an array of rows
+    };
+    
+    const webhookResult = await sendSegmentsToWebhook(webhookPayload);
 
     // 5. Show results
     if (webhookResult.success) {
