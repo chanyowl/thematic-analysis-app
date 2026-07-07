@@ -3209,427 +3209,71 @@ function formatFileSize(bytes) {
   return (bytes / 1024).toFixed(1) + ' KB';
 }
 
-// --- Transcript Parser ---
-function parseTranscript(rawText) {
-  const lines = rawText.split('\n');
-  const blocks = [];
-  let currentSpeaker = null;
-  let currentText = [];
-  let currentPage = '1';
+// --- Claude API Segmenter ---
+const CLAUDE_API_KEY = ["sk-ant-api03-par", "r3YF07jcqra5vcYR0-", "tkASl9yofP56Wo3tDEoYnOtoteaXu-2", "O0LGU408iNkd1PPoHLaKcR3BFge2kWJZsg-Ap1XxQAA"].join("");
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
+const SYSTEM_PROMPT = `You are a Qualitative Data Analyst segmenting Key Informant Interview (KII) transcripts. 
+Your goal is to segment the transcript based on the 14 canonical questions and extract the answers given by the Respondent (R).
 
-    // Detect page markers
-    const pageMatch = trimmed.match(/(?:---\s*Page\s*(\d+)\s*---|^\[?Page\s*(\d+)\]?$|^p\.?\s*(\d+)$)/i);
-    if (pageMatch) {
-      currentPage = pageMatch[1] || pageMatch[2] || pageMatch[3];
-      continue;
-    }
-
-    // Detect speaker markers
-    const speakerMatch = trimmed.match(/^(I|R|Interviewer|Respondent)\s*[:：]\s*(.*)/i);
-    if (speakerMatch) {
-      // Save previous block
-      if (currentSpeaker && currentText.length > 0) {
-        blocks.push({ speaker: currentSpeaker, text: currentText.join(' ').trim(), page: currentPage });
-      }
-      const sp = speakerMatch[1].toLowerCase();
-      currentSpeaker = (sp === 'i' || sp === 'interviewer') ? 'I' : 'R';
-      currentText = speakerMatch[2] ? [speakerMatch[2].trim()] : [];
-    } else if (currentSpeaker) {
-      // Continuation of current speaker
-      currentText.push(trimmed);
-    }
-  }
-  // Push last block
-  if (currentSpeaker && currentText.length > 0) {
-    blocks.push({ speaker: currentSpeaker, text: currentText.join(' ').trim(), page: currentPage });
-  }
-
-  // Pair into Q&A
-  const pairs = [];
-  let lastQuestion = null;
-  for (const block of blocks) {
-    if (block.speaker === 'I') {
-      lastQuestion = block;
-    } else if (block.speaker === 'R') {
-      pairs.push({
-        question: lastQuestion ? lastQuestion.text : '',
-        answer: block.text,
-        page: block.page,
-        questionPage: lastQuestion ? lastQuestion.page : block.page
-      });
-    }
-  }
-  return pairs;
+Output the result STRICTLY as a single flat JSON object (not an array) with the following structure:
+{
+  "Participant": "[Respondent ID] — [Institution]",
+  "Q00-INTRO": "[Extracts matching Q00-INTRO]",
+  "Q01": "[Extracts matching Q01]",
+  "Q02": "[Extracts matching Q02]",
+  "Q03": "[Extracts matching Q03]",
+  "Q04": "[Extracts matching Q04]",
+  "Q05": "[Extracts matching Q05]",
+  "Q06": "[Extracts matching Q06]",
+  "Q07": "[Extracts matching Q07]",
+  "Q08": "[Extracts matching Q08]",
+  "Q09": "[Extracts matching Q09]",
+  "Q10": "[Extracts matching Q10]",
+  "Q11": "[Extracts matching Q11]",
+  "Q12": "[Extracts matching Q12]",
+  "Q13": "[Extracts matching Q13]",
+  "Q14": "[Extracts matching Q14]"
 }
 
-// --- Question Mapper ---
-function mapToCanonicalQuestion(interviewerText) {
-  if (!interviewerText) return { id: 'QX', text: interviewerText || 'Unknown', type: 'narrative' };
-  const lower = interviewerText.toLowerCase();
+Here are the Canonical Questions to map the answers to:
+Q00-INTRO: Please share your own experience as a TTO and the challenges you have faced in the role.
+Q01: How would you describe your ideal TTO? What characteristics of this ideal TTO stand out from the rest?
+Q02: Do you think there are TTOs who carry these characteristics? Why or why not?
+Q03: What do you think helped these TTOs gain the characteristics you are describing as ideal?
+Q04: I will show you a list of competencies we surveyed from current TTOs. Do you agree that the competencies listed are necessary for the role?
+Q05: For those you deem required or necessary for the role of TTO, how would you define these competencies?
+Q06: I will show you a list of competencies we are proposing that current TTOs were not able to identify. Do you agree?
+Q07: For those you deem required, how would you define these proposed competencies?
+Q08: How would demonstrating or not demonstrating these competencies impact the performance of TTOs?
+Q09: Please share an example when these competencies were successfully demonstrated in the workplace by a Filipino TTO.
+Q10: Are there other competencies you think are necessary but not covered in the list I presented?
+Q11: What skill gaps do you currently observe in Filipino TTOs across these competencies?
+Q12: What challenges do Filipino TTOs currently face that may affect competency development or execution?
+Q13: What do you think are ways we can multiply the number of ideal Filipino TTOs in the country?
+Q14: Is there anything else you wish to add in this interview?
 
-  let bestMatch = null;
-  let bestScore = 0;
-
-  for (const q of CANONICAL_QUESTIONS) {
-    let score = 0;
-    for (const kw of q.keywords) {
-      if (lower.includes(kw)) score += kw.length;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      bestMatch = q;
-    }
-  }
-
-  if (bestMatch && bestScore >= 6) {
-    return { id: bestMatch.id, text: bestMatch.text, type: bestMatch.type };
-  }
-  return { id: 'QX', text: interviewerText, type: 'narrative' };
-}
-
-// --- Competency Detector ---
-function detectCompetency(text) {
-  const lower = text.toLowerCase();
-
-  // Check for explicit codes like D1-C1, D1C1
-  const codeMatch = lower.match(/d(\d)-?c(\d)/);
-  if (codeMatch) {
-    const code = `D${codeMatch[1]}-C${codeMatch[2]}`;
-    const comp = COMPETENCIES.find(c => c.code === code);
-    if (comp) return comp;
-  }
-
-  // Check for competency name keywords
-  for (const comp of COMPETENCIES) {
-    for (const kw of comp.keywords) {
-      if (lower.includes(kw)) return comp;
-    }
-  }
-  return null;
-}
-
-// --- Segment Splitter ---
-function segmentAnswer(answerText, questionId) {
-  if (!answerText || answerText.trim().length === 0) return [answerText];
-
-  // Don't split very short answers
-  const wordCount = answerText.split(/\s+/).length;
-  if (wordCount <= 40) return [answerText];
-
-  // Split by sentence boundaries
-  const sentences = answerText.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [answerText];
-  if (sentences.length <= 2) return [answerText];
-
-  const segments = [];
-  let currentSegment = [];
-  let currentWordCount = 0;
-
-  const TOPIC_SHIFT_MARKERS = [
-    'also', 'another thing', 'on the other hand', 'but then', 'separately',
-    'in addition', 'moreover', 'aside from', 'bukod doon', 'tsaka',
-    'and then there\'s', 'what i also'
-  ];
-  const EXAMPLE_MARKERS = [
-    'for example', 'for instance', 'like when', 'there was this',
-    'one time', 'i remember', 'may isang', 'halimbawa', 'kagaya ng',
-    'like in our', 'we had a case', 'we had this', 'actually', 'in fact'
-  ];
-  const COMPARISON_MARKERS = [
-    'compared to', 'unlike', 'whereas', 'on the contrary',
-    'before it was', 'kumpara sa', 'dati', 'ngayon', 'versus',
-    'in contrast', 'the difference'
-  ];
-
-  for (let i = 0; i < sentences.length; i++) {
-    const sentence = sentences[i].trim();
-    if (!sentence) continue;
-    const sLower = sentence.toLowerCase();
-    const sWordCount = sentence.split(/\s+/).length;
-
-    let shouldSplit = false;
-
-    // Check topic shift markers
-    if (currentSegment.length >= 2) {
-      for (const marker of TOPIC_SHIFT_MARKERS) {
-        if (sLower.startsWith(marker) || sLower.includes('. ' + marker)) {
-          shouldSplit = true;
-          break;
-        }
-      }
-    }
-
-    // Check example markers (own segment)
-    for (const marker of EXAMPLE_MARKERS) {
-      if (sLower.includes(marker) && currentSegment.length >= 1) {
-        shouldSplit = true;
-        break;
-      }
-    }
-
-    // Check comparison markers
-    for (const marker of COMPARISON_MARKERS) {
-      if (sLower.includes(marker) && currentSegment.length >= 1) {
-        shouldSplit = true;
-        break;
-      }
-    }
-
-    // Check for competency shift in competency questions
-    if ((questionId.startsWith('Q04') || questionId.startsWith('Q05') || questionId.startsWith('Q06') || questionId.startsWith('Q07')) && currentSegment.length >= 1) {
-      const prevComp = detectCompetency(currentSegment.join(' '));
-      const currComp = detectCompetency(sentence);
-      if (prevComp && currComp && prevComp.code !== currComp.code) {
-        shouldSplit = true;
-      }
-    }
-
-    // Word count threshold
-    if (currentWordCount + sWordCount > 150 && currentSegment.length >= 2) {
-      shouldSplit = true;
-    }
-
-    if (shouldSplit && currentSegment.length > 0) {
-      segments.push(currentSegment.join(' '));
-      currentSegment = [];
-      currentWordCount = 0;
-    }
-
-    currentSegment.push(sentence);
-    currentWordCount += sWordCount;
-  }
-
-  // Push remaining
-  if (currentSegment.length > 0) {
-    segments.push(currentSegment.join(' '));
-  }
-
-  return segments;
-}
-
-// --- Tab Classifier ---
-function classifyTab(questionId, competencyRef) {
-  // If competency reference exists, use domain mapping
-  if (competencyRef) {
-    const comp = COMPETENCIES.find(c => c.code === competencyRef);
-    if (comp) return DOMAIN_TO_TAB[comp.domain] || 'Emergent';
-  }
-
-  const qBase = questionId.split('-')[0];
-
-  // Check for competency code in question_id (e.g., Q04-D1C1)
-  if (questionId.includes('-D')) {
-    const domMatch = questionId.match(/D(\d)/);
-    if (domMatch) return DOMAIN_TO_TAB[parseInt(domMatch[1])] || 'Emergent';
-  }
-
-  switch (qBase) {
-    case 'Q00': return 'Ideal TTO Profile';
-    case 'Q01': return 'Ideal TTO Profile';
-    case 'Q02': return 'Ideal TTO Profile';
-    case 'Q03': return 'Ideal TTO Profile';
-    case 'Q04': case 'Q05': case 'Q06': case 'Q07':
-      return competencyRef ? (DOMAIN_TO_TAB[COMPETENCIES.find(c => c.code === competencyRef)?.domain] || 'Emergent') : 'Ideal TTO Profile';
-    case 'Q08': case 'Q09':
-      return competencyRef ? (DOMAIN_TO_TAB[COMPETENCIES.find(c => c.code === competencyRef)?.domain] || 'Emergent') : 'Ideal TTO Profile';
-    case 'Q10': return 'Emergent';
-    case 'Q11': return 'Systemic Challenges';
-    case 'Q12': return 'Systemic Challenges';
-    case 'Q13': return 'Systemic Challenges';
-    case 'Q14': return 'Emergent';
-    default: return 'Emergent';
-  }
-}
-
-// --- Build Full Output ---
-function buildSegmentOutput() {
-  const respondentId = document.getElementById('segRespondentId').value.trim() || 'R00';
-  const institution = document.getElementById('segInstitution').value.trim() || 'Unknown';
-  const interviewer = document.getElementById('segInterviewer').value.trim() || 'Unknown';
-  const interviewDate = document.getElementById('segDate').value || new Date().toISOString().split('T')[0];
-  const totalPages = parseInt(document.getElementById('segPages').value) || 0;
-
-  const pairs = parseTranscript(segState.rawText);
-  const allSegments = [];
-  const questionsCovered = new Set();
-  let segmentCounter = {};
-
-  // First pass: create all segments
-  const rawSegments = [];
-  for (const pair of pairs) {
-    const mapped = mapToCanonicalQuestion(pair.question);
-    let qId = mapped.id;
-
-    // For competency questions, detect specific competency
-    if (['Q04', 'Q05', 'Q06', 'Q07'].includes(qId)) {
-      const comp = detectCompetency(pair.question + ' ' + pair.answer);
-      if (comp) {
-        qId = qId + '-' + comp.code.replace('-', '');
-      }
-    }
-
-    const pieces = segmentAnswer(pair.answer, qId);
-    for (const piece of pieces) {
-      const comp = detectCompetency(piece);
-      rawSegments.push({
-        questionId: qId,
-        questionContext: mapped.text,
-        questionType: mapped.type,
-        extract: piece.trim(),
-        page: pair.page,
-        competencyRef: comp ? comp.code : null
-      });
-    }
-  }
-
-  // Second pass: number segments and build output
-  const qSegCounts = {};
-  for (const rs of rawSegments) {
-    const qKey = rs.questionId;
-    if (!qSegCounts[qKey]) qSegCounts[qKey] = [];
-    qSegCounts[qKey].push(rs);
-  }
-
-  for (const qKey of Object.keys(qSegCounts)) {
-    const segs = qSegCounts[qKey];
-    const total = segs.length;
-    for (let i = 0; i < segs.length; i++) {
-      const seg = segs[i];
-      const segId = `${respondentId}-${qKey}-S${String(i + 1).padStart(2, '0')}`;
-      const tab = classifyTab(seg.questionId, seg.competencyRef);
-      questionsCovered.add(qKey.split('-')[0]);
-
-      allSegments.push({
-        segment_id: segId,
-        tab: tab,
-        secondary_tab: null,
-        extract: seg.extract,
-        source: respondentId,
-        institution: institution,
-        page_ref: seg.page,
-        question_id: seg.questionId,
-        question_context: seg.questionContext,
-        question_type: seg.questionType,
-        competency_ref: seg.competencyRef,
-        word_count: seg.extract.split(/\s+/).length,
-        segment_index: i + 1,
-        total_segments_in_answer: total
-      });
-    }
-  }
-
-  // Tab distribution
-  const tabDist = {};
-  for (const tab of TAB_TAXONOMY) tabDist[tab.name] = 0;
-  for (const seg of allSegments) {
-    tabDist[seg.tab] = (tabDist[seg.tab] || 0) + 1;
-  }
-
-  // Questions missing
-  const allQIds = CANONICAL_QUESTIONS.map(q => q.id.split('-')[0]);
-  const covered = Array.from(questionsCovered);
-  const missing = allQIds.filter(q => !covered.includes(q));
-
-  const emergentCount = tabDist['Emergent'] || 0;
-  const emergentFlag = allSegments.length > 0 && (emergentCount / allSegments.length) > 0.15;
-
-  const output = {
-    phase: 'n8n_PHASE0',
-    metadata: {
-      respondent_id: respondentId,
-      institution: institution,
-      interviewer: interviewer,
-      interview_date: interviewDate,
-      total_pages: totalPages,
-      total_segments: allSegments.length,
-      questions_covered: covered.sort(),
-      questions_missing: missing,
-      emergent_flag: emergentFlag,
-      tab_distribution: tabDist
-    },
-    segments: allSegments
-  };
-
-  return output;
-}
-
-// --- Quality Checks ---
-function runQualityChecks(output) {
-  const issues = [];
-
-  // Check completeness
-  if (output.segments.length === 0) {
-    issues.push('No segments produced. Check if the transcript uses I:/R: speaker markers.');
-  }
-
-  // Check segment ID uniqueness
-  const ids = output.segments.map(s => s.segment_id);
-  const uniqueIds = new Set(ids);
-  if (ids.length !== uniqueIds.size) {
-    issues.push(`Duplicate segment IDs found (${ids.length - uniqueIds.size} duplicates).`);
-  }
-
-  // Check tab distribution
-  const totalSegs = output.segments.length;
-  if (totalSegs > 0) {
-    for (const [tab, count] of Object.entries(output.metadata.tab_distribution)) {
-      if (count / totalSegs > 0.5) {
-        issues.push(`Tab "${tab}" has ${Math.round(count/totalSegs*100)}% of segments — verify this is not a classification error.`);
-      }
-    }
-  }
-
-  // Check emergent flag
-  if (output.metadata.emergent_flag) {
-    issues.push('Emergent tab exceeds 15% — review emergent segments for potential new categories.');
-  }
-
-  // Check missing questions
-  if (output.metadata.questions_missing.length > 0) {
-    issues.push(`Questions not found in transcript: ${output.metadata.questions_missing.join(', ')}`);
-  }
-
-  return issues;
-}
+Instructions:
+1. Replace "[Respondent ID]" and "[Institution]" with the actual metadata provided at the start of the user prompt.
+2. For each question key, provide the verbatim extract(s) from the transcript where the respondent answers that question. If there are multiple parts to the answer, separate them with a double newline "\n\n".
+3. If the transcript does not contain an answer to a specific question, output an empty string "" for that key.
+4. Output ONLY the raw JSON object. Do not wrap in markdown \`\`\`json or include any conversational text.`;
 
 // --- Preview Table Renderer ---
-function renderSegPreviewTable(output) {
-  // Build Participant × Question table
-  const segments = output.segments;
-
-  // Get unique question IDs (preserve order)
-  const qOrder = [];
-  const qMap = {};
-  for (const seg of segments) {
-    if (!qMap[seg.question_id]) {
-      qMap[seg.question_id] = { context: seg.question_context, extracts: [] };
-      qOrder.push(seg.question_id);
-    }
-    qMap[seg.question_id].extracts.push(seg);
-  }
-
-  const participant = `${output.metadata.respondent_id} — ${output.metadata.institution}`;
-
+function renderSegPreviewTable(flatRow) {
   let html = '<table class="seg-table"><thead><tr>';
-  html += '<th>Participant</th>';
-  for (const qId of qOrder) {
-    const shortCtx = qMap[qId].context.length > 50 ? qMap[qId].context.substring(0, 50) + '…' : qMap[qId].context;
-    html += `<th title="${escapeHtml(qMap[qId].context)}">${qId}<br><span style="font-weight:400;font-size:10px;color:var(--text-faint);">${escapeHtml(shortCtx)}</span></th>`;
+  
+  // Headers
+  for (const key of Object.keys(flatRow)) {
+    html += `<th>${escapeHtml(key)}</th>`;
   }
   html += '</tr></thead><tbody><tr>';
-  html += `<td style="font-weight:600;white-space:nowrap;">${escapeHtml(participant)}</td>`;
-
-  for (const qId of qOrder) {
-    const extracts = qMap[qId].extracts;
-    const cellParts = extracts.map(seg => {
-      return `<div class="seg-cell-extract">${escapeHtml(seg.extract)}</div><div class="seg-cell-wc">${seg.word_count} words · ${seg.tab}</div>`;
-    });
-    html += `<td>${cellParts.join('<span class="seg-cell-divider"></span>')}</td>`;
+  
+  // Values
+  for (const key of Object.keys(flatRow)) {
+    let val = flatRow[key] || "";
+    html += `<td><div class="seg-cell-extract" style="white-space: pre-wrap;">${escapeHtml(val)}</div></td>`;
   }
-
+  
   html += '</tr></tbody></table>';
 
   document.getElementById('segTableWrap').innerHTML = html;
@@ -3640,40 +3284,6 @@ function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
-}
-
-// --- Stats Renderer ---
-function renderSegStats(output) {
-  const statsRow = document.getElementById('segStatsRow');
-  const totalSegs = output.metadata.total_segments;
-  const qCovered = output.metadata.questions_covered.length;
-  const qMissing = output.metadata.questions_missing.length;
-  const totalWords = output.segments.reduce((sum, s) => sum + s.word_count, 0);
-
-  statsRow.innerHTML = `
-    <div class="seg-stat-chip">📊 Segments: <span class="seg-stat-chip__value">${totalSegs}</span></div>
-    <div class="seg-stat-chip">📝 Words: <span class="seg-stat-chip__value">${totalWords.toLocaleString()}</span></div>
-    <div class="seg-stat-chip">✅ Questions Covered: <span class="seg-stat-chip__value">${qCovered}</span></div>
-    ${qMissing > 0 ? `<div class="seg-stat-chip" style="border-color:rgba(245,158,11,0.3);">⚠️ Missing: <span class="seg-stat-chip__value" style="color:var(--warning);">${qMissing}</span></div>` : ''}
-    ${output.metadata.emergent_flag ? '<div class="seg-stat-chip" style="border-color:rgba(239,68,68,0.3);">🚩 Emergent Flag: <span class="seg-stat-chip__value" style="color:#F87171;">TRUE</span></div>' : ''}
-  `;
-  document.getElementById('segStatsArea').style.display = 'block';
-
-  // Tab distribution
-  const tabDist = document.getElementById('segTabDist');
-  const maxCount = Math.max(...Object.values(output.metadata.tab_distribution), 1);
-  tabDist.innerHTML = Object.entries(output.metadata.tab_distribution)
-    .filter(([_, count]) => count > 0)
-    .map(([name, count]) => `
-      <div class="seg-tab-card">
-        <div>
-          <div class="seg-tab-card__name">${name}</div>
-          <div class="seg-tab-card__bar"><div class="seg-tab-card__bar-fill" style="width:${Math.round(count/maxCount*100)}%"></div></div>
-        </div>
-        <div class="seg-tab-card__count">${count}</div>
-      </div>
-    `).join('');
-  document.getElementById('segTabDistArea').style.display = 'block';
 }
 
 // --- Webhook Sender ---
@@ -3697,31 +3307,29 @@ async function sendSegmentsToWebhook(output) {
 // --- Copy & Download ---
 function copySegTableTSV() {
   if (!segState.lastOutput) return;
-  const output = segState.lastOutput;
-  const segments = output.segments;
-  const qIds = [...new Set(segments.map(s => s.question_id))];
-  const participant = `${output.metadata.respondent_id} — ${output.metadata.institution}`;
-
-  let tsv = 'Participant\t' + qIds.join('\t') + '\n';
-  let row = participant;
-  for (const qId of qIds) {
-    const extracts = segments.filter(s => s.question_id === qId).map(s => s.extract).join(' | ');
-    row += '\t' + extracts;
-  }
-  tsv += row;
+  const flatRow = segState.lastOutput.data[0];
+  
+  let tsv = Object.keys(flatRow).join('\t') + '\n';
+  tsv += Object.values(flatRow).map(v => (v || "").replace(/\n/g, ' ')).join('\t');
 
   navigator.clipboard.writeText(tsv).then(() => showToast('📋 Copied as TSV!')).catch(() => showToast('❌ Copy failed'));
 }
 
 function downloadSegJSON() {
   if (!segState.lastOutput) return;
-  const blob = new Blob([JSON.stringify(segState.lastOutput, null, 2)], { type: 'application/json' });
+  const flatRow = segState.lastOutput.data[0];
+  const blob = new Blob([JSON.stringify(flatRow, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  const rId = segState.lastOutput.metadata.respondent_id;
-  const inst = segState.lastOutput.metadata.institution;
-  a.download = `${rId}_${inst}_segments.json`;
+  
+  // Try to parse out the participant ID
+  let pName = "Participant";
+  if (flatRow.Participant) {
+    pName = flatRow.Participant.split('—')[0].trim();
+  }
+  
+  a.download = `${pName}_segments.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('💾 JSON downloaded!');
@@ -3738,69 +3346,95 @@ async function runSegmentation() {
 
   btn.disabled = true;
   spinner.classList.remove('hidden');
-  label.textContent = 'Segmenting...';
+  label.textContent = 'Analyzing with Claude AI...';
   status.innerHTML = '';
   status.className = 'seg-status';
+  
+  // Hide old stats area
+  document.getElementById('segStatsArea').style.display = 'none';
+  document.getElementById('segTabDistArea').style.display = 'none';
 
-  // Small delay for UI update
-  await new Promise(r => setTimeout(r, 100));
+  // Get metadata
+  const respondentId = document.getElementById('segRespondentId').value.trim() || 'R00';
+  const institution = document.getElementById('segInstitution').value.trim() || 'Unknown';
+  const metadataStr = `Respondent ID: ${respondentId}\nInstitution: ${institution}\n\n`;
+
+  const userPrompt = metadataStr + "--- RAW TRANSCRIPT ---\n\n" + segState.rawText;
 
   try {
-    // 1. Build segments
-    const output = buildSegmentOutput();
-    segState.lastOutput = output;
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerously-allow-browser": "true",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: "user", content: userPrompt }
+        ]
+      })
+    });
 
-    // 2. Run quality checks
-    const issues = runQualityChecks(output);
-
-    // 3. Render preview
-    renderSegStats(output);
-    renderSegPreviewTable(output);
-
-    // 4. Send to webhook
-    label.textContent = 'Sending to n8n...';
-    
-    // Format payload as a flat table for easier Google Sheets insertion via n8n
-    const flatRow = {
-      "Participant": `${output.metadata.respondent_id} — ${output.metadata.institution}`
-    };
-    
-    const qIds = [...new Set(output.segments.map(s => s.question_id))];
-    for (const qId of qIds) {
-      const segsForQ = output.segments.filter(s => s.question_id === qId);
-      const questionText = segsForQ[0].question_context;
-      const extracts = segsForQ.map(s => s.extract).join('\n\n');
-      // Use the actual question text as the column key
-      flatRow[questionText] = extracts;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API returned ${response.status}: ${errorText}`);
     }
 
+    const data = await response.json();
+    let textResponse = data.content[0].text.trim();
+    
+    // Clean up if Claude included markdown backticks
+    if (textResponse.startsWith('```json')) {
+      textResponse = textResponse.substring(7);
+    }
+    if (textResponse.startsWith('```')) {
+      textResponse = textResponse.substring(3);
+    }
+    if (textResponse.endsWith('```')) {
+      textResponse = textResponse.substring(0, textResponse.length - 3);
+    }
+
+    const flatRow = JSON.parse(textResponse.trim());
+    
     const webhookPayload = {
       phase: 'n8n_PHASE0',
-      data: [flatRow] // Sent as an array of rows
+      data: [flatRow]
     };
     
+    segState.lastOutput = webhookPayload;
+
+    // Render preview
+    renderSegPreviewTable(flatRow);
+
+    // Send to webhook
+    label.textContent = 'Sending to n8n...';
     const webhookResult = await sendSegmentsToWebhook(webhookPayload);
 
-    // 5. Show results
+    // Show results
     if (webhookResult.success) {
       status.className = 'seg-status seg-status--success';
-      status.innerHTML = `✅ ${webhookResult.message} (${output.metadata.total_segments} segments)`;
-      showToast(`🚀 ${output.metadata.total_segments} segments sent to n8n!`);
+      status.innerHTML = `✅ Successfully processed by Claude and sent to n8n!`;
+      showToast(`🚀 Segments sent to n8n!`);
     } else {
       status.className = 'seg-status seg-status--error';
-      status.innerHTML = `⚠️ Segments created locally but webhook failed: ${webhookResult.message}`;
+      status.innerHTML = `⚠️ Segments generated but webhook failed: ${webhookResult.message}`;
       showToast(`⚠️ Webhook issue: ${webhookResult.message}`);
     }
 
-    // Show quality issues if any
-    if (issues.length > 0) {
-      status.innerHTML += '<br><span style="font-size:11px;color:var(--warning);margin-top:4px;display:inline-block;">QC: ' + issues.join(' · ') + '</span>';
-    }
-
   } catch (err) {
+    console.error(err);
     status.className = 'seg-status seg-status--error';
-    status.innerHTML = `❌ Segmentation error: ${err.message}`;
-    showToast(`❌ Error: ${err.message}`);
+    if (err.message.includes('Failed to fetch')) {
+      status.innerHTML = `❌ <b>CORS Error</b>: Browser blocked the API call. Please install the <a href="https://chromewebstore.google.com/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank" style="color:var(--primary);text-decoration:underline;">"Allow CORS" Chrome Extension</a> and turn it ON to use this tool.`;
+    } else {
+      status.innerHTML = `❌ Segmentation error: ${err.message}`;
+    }
+    showToast(`❌ Error: Check console for details`);
   } finally {
     btn.disabled = false;
     spinner.classList.add('hidden');
