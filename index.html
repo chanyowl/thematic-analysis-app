@@ -929,7 +929,277 @@
     opacity: 0.7;
     margin-left: 4px;
   }
+
+  /* ===================== TRANSCRIPT SEGMENTER ===================== */
+  .segmenter-header { text-align: center; margin-bottom: 40px; }
+  .segmenter-header__eyebrow {
+    font-size: 10px; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 12px;
+  }
+  .segmenter-header__title {
+    font-size: 28px; font-weight: 700; margin-bottom: 10px;
+    background: linear-gradient(135deg, #34D399, #60A5FA, #A78BFA);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .segmenter-header__sub {
+    color: var(--text-muted); font-size: 14px; max-width: 620px; margin: 0 auto;
+    font-weight: 300; line-height: 1.7;
+  }
+
+  .segmenter-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 768px) { .segmenter-grid { grid-template-columns: 1fr; } }
+
+  .segmenter-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; position: relative; overflow: hidden;
+  }
+  .segmenter-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #34D399, #60A5FA);
+    opacity: 0.5;
+  }
+  .segmenter-card__label {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 16px; font-weight: 500;
+  }
+
+  .seg-form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  @media (max-width: 480px) { .seg-form-grid { grid-template-columns: 1fr; } }
+  .seg-form-grid .seg-field-full { grid-column: 1 / -1; }
+
+  .seg-field label {
+    display: block; font-size: 11px; color: var(--text-muted);
+    margin-bottom: 6px; font-weight: 500; letter-spacing: 0.02em;
+  }
+  .seg-field input {
+    width: 100%; padding: 10px 14px; border-radius: 8px;
+    background: var(--bg-void); border: 1px solid var(--border);
+    color: var(--text-primary); font-family: inherit; font-size: 13px;
+    transition: border-color 0.2s; outline: none; box-sizing: border-box;
+  }
+  .seg-field input:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.12);
+  }
+  .seg-field input::placeholder { color: var(--text-faint); }
+
+  .seg-drop-zone {
+    border: 2px dashed var(--border-light); border-radius: 14px;
+    padding: 48px 24px; text-align: center; cursor: pointer;
+    transition: all 0.3s; position: relative; overflow: hidden;
+    background: rgba(255,255,255,0.01);
+  }
+  .seg-drop-zone::before {
+    content: ''; position: absolute; inset: -2px; border-radius: 16px;
+    background: conic-gradient(from 0deg, #34D399, #60A5FA, #A78BFA, #F472B6, #34D399);
+    opacity: 0; z-index: -1; transition: opacity 0.3s;
+  }
+  .seg-drop-zone:hover, .seg-drop-zone.drag-over {
+    border-color: transparent; background: rgba(52, 211, 153, 0.04);
+  }
+  .seg-drop-zone:hover::before, .seg-drop-zone.drag-over::before {
+    opacity: 0.3; animation: seg-border-spin 3s linear infinite;
+  }
+  @keyframes seg-border-spin {
+    to { transform: rotate(360deg); }
+  }
+  .seg-drop-zone__icon { font-size: 42px; margin-bottom: 16px; opacity: 0.7; }
+  .seg-drop-zone__title {
+    font-size: 16px; font-weight: 600; color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+  .seg-drop-zone__hint {
+    font-size: 12px; color: var(--text-muted); margin-bottom: 16px;
+  }
+  .seg-drop-zone__formats {
+    display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+  }
+  .seg-format-badge {
+    font-size: 10px; padding: 4px 10px; border-radius: 6px;
+    font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .seg-format-badge--docx {
+    background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: var(--accent-blue);
+  }
+  .seg-format-badge--md {
+    background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.2); color: var(--accent-purple);
+  }
+  .seg-format-badge--txt {
+    background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); color: #34D399;
+  }
+  .seg-file-input { display: none; }
+
+  .seg-file-loaded {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.15);
+    border-radius: 10px; padding: 12px 16px; margin-top: 16px;
+  }
+  .seg-file-loaded__icon { font-size: 20px; }
+  .seg-file-loaded__name { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .seg-file-loaded__size { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+  .seg-file-loaded__remove {
+    background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #F87171; border-radius: 6px; padding: 4px 10px; font-size: 11px;
+    cursor: pointer; font-family: inherit; font-weight: 600; transition: all 0.2s;
+  }
+  .seg-file-loaded__remove:hover { background: rgba(239, 68, 68, 0.2); }
+
+  .seg-preview-section {
+    margin-bottom: 24px; background: var(--bg-card);
+    border: 1px solid var(--border); border-radius: 14px; overflow: hidden;
+  }
+  .seg-preview-header {
+    padding: 16px 20px; display: flex; justify-content: space-between;
+    align-items: center; cursor: pointer; transition: background 0.2s;
+    border-bottom: 1px solid var(--border);
+  }
+  .seg-preview-header:hover { background: rgba(255,255,255,0.02); }
+  .seg-preview-header__title {
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .seg-preview-header__toggle {
+    font-size: 12px; color: var(--text-muted); transition: transform 0.3s;
+  }
+  .seg-preview-body {
+    max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+  }
+  .seg-preview-body.expanded { max-height: 500px; }
+  .seg-preview-text {
+    padding: 16px 20px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; line-height: 1.7; color: var(--text-secondary);
+    white-space: pre-wrap; word-break: break-word; max-height: 460px;
+    overflow-y: auto; background: var(--bg-void);
+  }
+
+  .seg-action-bar {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .btn-segment {
+    padding: 14px 32px; border-radius: 10px; font-weight: 700;
+    font-size: 14px; cursor: pointer; border: none; font-family: inherit;
+    transition: all 0.3s; display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #34D399, #059669);
+    color: var(--bg-deep); box-shadow: 0 4px 16px rgba(52, 211, 153, 0.3);
+  }
+  .btn-segment:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(52, 211, 153, 0.4); }
+  .btn-segment:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-segment .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.15);
+    border-top-color: var(--bg-deep); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .seg-status {
+    font-size: 12px; color: var(--text-muted); display: flex;
+    align-items: center; gap: 6px;
+  }
+  .seg-status--success { color: #34D399; }
+  .seg-status--error { color: #F87171; }
+
+  .seg-stats-row {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
+  }
+  .seg-stat-chip {
+    font-size: 12px; padding: 8px 14px; border-radius: 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    color: var(--text-secondary); display: flex; align-items: center; gap: 6px;
+  }
+  .seg-stat-chip__value {
+    font-weight: 700; font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-primary);
+  }
+
+  .seg-output-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden; margin-bottom: 24px;
+  }
+  .seg-output-header {
+    padding: 16px 20px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid var(--border);
+  }
+  .seg-output-header__title {
+    font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .seg-output-actions { display: flex; gap: 8px; }
+  .seg-output-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.2s;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+  }
+  .seg-output-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+  .seg-table-wrap {
+    overflow-x: auto; max-height: 600px; overflow-y: auto;
+  }
+  .seg-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+    min-width: 900px;
+  }
+  .seg-table thead th {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg-surface); padding: 12px 14px;
+    text-align: left; font-weight: 600; font-size: 11px;
+    color: var(--text-muted); letter-spacing: 0.02em;
+    border-bottom: 2px solid var(--border-light);
+    white-space: nowrap;
+  }
+  .seg-table thead th:first-child { min-width: 140px; }
+  .seg-table tbody td {
+    padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--text-secondary); line-height: 1.5; vertical-align: top;
+    max-width: 320px;
+  }
+  .seg-table tbody tr:hover td { background: rgba(255,255,255,0.02); }
+  .seg-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.01); }
+  .seg-table tbody tr:nth-child(even):hover td { background: rgba(255,255,255,0.03); }
+  .seg-table .seg-cell-extract {
+    font-size: 11px; line-height: 1.6; color: var(--text-dim);
+  }
+  .seg-cell-divider {
+    display: block; height: 1px; background: rgba(255,255,255,0.06);
+    margin: 8px 0;
+  }
+  .seg-cell-wc {
+    font-size: 9px; color: var(--text-faint); font-family: 'IBM Plex Mono', monospace;
+    margin-top: 4px;
+  }
+  .seg-tab-distribution {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px; margin-bottom: 24px;
+  }
+  .seg-tab-card {
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; display: flex;
+    justify-content: space-between; align-items: center;
+  }
+  .seg-tab-card__name {
+    font-size: 12px; color: var(--text-secondary); font-weight: 500;
+  }
+  .seg-tab-card__count {
+    font-size: 16px; font-weight: 700; color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .seg-tab-card__bar {
+    height: 3px; border-radius: 2px; margin-top: 8px;
+    background: var(--bg-surface); overflow: hidden;
+  }
+  .seg-tab-card__bar-fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #34D399, #60A5FA);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body>
 
@@ -940,6 +1210,7 @@
     <button class="app-nav__tab active" id="navTabContext" onclick="switchAppTab('context')">📋 Project Context</button>
     <button class="app-nav__tab" id="navTabSetup" onclick="switchAppTab('setup')">🧬 Identity Setup</button>
     <button class="app-nav__tab" id="navTabDashboard" onclick="switchAppTab('dashboard')">📊 Analysis Dashboard <span class="nav-badge" id="phaseBadge" style="display:none;">—</span></button>
+    <button class="app-nav__tab" id="navTabSegmenter" onclick="switchAppTab('segmenter')">📄 Transcript Segmenter</button>
   </div>
 </nav>
 
@@ -1137,6 +1408,120 @@
     <div class="footer">
       Frameworks sourced from Braun & Clarke (2006, 2022) · Saldaña (2021) · Charmaz (2014) · Schwandt (2000)<br>
       Thematic Dashboard connects dynamically to your Output Google Spreadsheet.
+    </div>
+  </div>
+</div>
+
+<!-- ============ TAB 4: TRANSCRIPT SEGMENTER ============ -->
+<div class="app-tab-panel" id="panelSegmenter">
+  <div class="container">
+    <div class="segmenter-header">
+      <div class="segmenter-header__eyebrow">Phase 0 · Braun & Clarke Familiarization</div>
+      <h1 class="segmenter-header__title">KII Transcript Segmenter</h1>
+      <p class="segmenter-header__sub">Drop a raw interview transcript and transform it into structured, codeable segments. The output is sent to the n8n pipeline for Google Sheets append.</p>
+    </div>
+
+    <div class="segmenter-grid">
+      <!-- Left: Metadata Form -->
+      <div class="segmenter-card">
+        <div class="segmenter-card__label">Interview Metadata</div>
+        <div class="seg-form-grid">
+          <div class="seg-field">
+            <label for="segRespondentId">Respondent ID</label>
+            <input type="text" id="segRespondentId" placeholder="e.g., R01">
+          </div>
+          <div class="seg-field">
+            <label for="segInstitution">Institution</label>
+            <input type="text" id="segInstitution" placeholder="e.g., USTP-CDO">
+          </div>
+          <div class="seg-field">
+            <label for="segInterviewer">Interviewer</label>
+            <input type="text" id="segInterviewer" placeholder="e.g., Dr. Santos">
+          </div>
+          <div class="seg-field">
+            <label for="segDate">Interview Date</label>
+            <input type="date" id="segDate">
+          </div>
+          <div class="seg-field seg-field-full">
+            <label for="segPages">Total Pages</label>
+            <input type="number" id="segPages" placeholder="e.g., 12" min="1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: File Drop Zone -->
+      <div class="segmenter-card">
+        <div class="segmenter-card__label">Upload Transcript</div>
+        <div class="seg-drop-zone" id="segDropZone" onclick="document.getElementById('segFileInput').click()">
+          <div class="seg-drop-zone__icon">📄</div>
+          <div class="seg-drop-zone__title">Drop your transcript here</div>
+          <div class="seg-drop-zone__hint">or click to browse files</div>
+          <div class="seg-drop-zone__formats">
+            <span class="seg-format-badge seg-format-badge--docx">.docx</span>
+            <span class="seg-format-badge seg-format-badge--md">.md</span>
+            <span class="seg-format-badge seg-format-badge--txt">.txt</span>
+          </div>
+        </div>
+        <input type="file" class="seg-file-input" id="segFileInput" accept=".docx,.md,.txt,.text">
+        <div id="segFileLoaded" style="display:none;">
+          <div class="seg-file-loaded">
+            <span class="seg-file-loaded__icon">📎</span>
+            <span class="seg-file-loaded__name" id="segFileName">—</span>
+            <span class="seg-file-loaded__size" id="segFileSize">—</span>
+            <button class="seg-file-loaded__remove" onclick="clearSegFile()">✕ Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw Text Preview (collapsible) -->
+    <div class="seg-preview-section hidden" id="segPreviewSection">
+      <div class="seg-preview-header" onclick="toggleSegPreview()">
+        <div class="seg-preview-header__title">📝 Raw Transcript Preview <span id="segPreviewLineCount" style="font-size:11px;color:var(--text-muted);font-weight:400;"></span></div>
+        <div class="seg-preview-header__toggle" id="segPreviewToggle">▼</div>
+      </div>
+      <div class="seg-preview-body" id="segPreviewBody">
+        <pre class="seg-preview-text" id="segPreviewText"></pre>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="seg-action-bar">
+      <button class="btn-segment" id="btnSegment" onclick="runSegmentation()" disabled>
+        <span id="btnSegmentLabel">⚡ Segment & Send to Pipeline</span>
+        <div class="spinner hidden" id="segSpinner"></div>
+      </button>
+      <div class="seg-status" id="segStatus"></div>
+    </div>
+
+    <!-- Output: Stats -->
+    <div id="segStatsArea" style="display:none;">
+      <div class="seg-stats-row" id="segStatsRow"></div>
+    </div>
+
+    <!-- Output: Tab Distribution -->
+    <div id="segTabDistArea" style="display:none;">
+      <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;font-weight:500;">Tab Distribution</div>
+      <div class="seg-tab-distribution" id="segTabDist"></div>
+    </div>
+
+    <!-- Output: Spreadsheet Table -->
+    <div class="seg-output-section hidden" id="segOutputSection">
+      <div class="seg-output-header">
+        <div class="seg-output-header__title">📊 Segmented Output</div>
+        <div class="seg-output-actions">
+          <button class="seg-output-btn" onclick="copySegTableTSV()">📋 Copy as TSV</button>
+          <button class="seg-output-btn" onclick="downloadSegJSON()">💾 Download JSON</button>
+        </div>
+      </div>
+      <div class="seg-table-wrap" id="segTableWrap">
+        <!-- Table rendered dynamically -->
+      </div>
+    </div>
+
+    <div class="footer">
+      Segmentation engine based on IMPACT NXT skill · Braun & Clarke (2006) Phase 1 Familiarization<br>
+      Handles Tagalog-English code-switching · 14-question canonical guide · 19 competencies × 6 domains
     </div>
   </div>
 </div>
@@ -1424,10 +1809,12 @@ function switchAppTab(tabName) {
   document.getElementById('panelContext').classList.toggle('active', tabName === 'context');
   document.getElementById('panelSetup').classList.toggle('active', tabName === 'setup');
   document.getElementById('panelDashboard').classList.toggle('active', tabName === 'dashboard');
+  document.getElementById('panelSegmenter').classList.toggle('active', tabName === 'segmenter');
   
   document.getElementById('navTabContext').classList.toggle('active', tabName === 'context');
   document.getElementById('navTabSetup').classList.toggle('active', tabName === 'setup');
   document.getElementById('navTabDashboard').classList.toggle('active', tabName === 'dashboard');
+  document.getElementById('navTabSegmenter').classList.toggle('active', tabName === 'segmenter');
   
   if (tabName === 'dashboard') {
     renderPhaseCards();
@@ -2667,12 +3054,747 @@ async function pollSheetData() {
   }
 }
 
+// ===================== TRANSCRIPT SEGMENTER ENGINE =====================
+
+// --- Domain Data (from skill references/domain-tables.md) ---
+const CANONICAL_QUESTIONS = [
+  { id: 'Q00-INTRO', text: 'Please share your own experience as a TTO and the challenges you have faced in the role.', type: 'narrative', keywords: ['experience', 'challenges', 'role', 'tto', 'introduce', 'background', 'tell us about'] },
+  { id: 'Q01', text: 'How would you describe your ideal TTO? What characteristics of this ideal TTO stand out from the rest?', type: 'narrative', keywords: ['ideal tto', 'describe', 'characteristics', 'stand out', 'ideal'] },
+  { id: 'Q02', text: 'Do you think there are TTOs who carry these characteristics? Why or why not?', type: 'narrative', keywords: ['carry these', 'characteristics', 'why or why not', 'ttos who'] },
+  { id: 'Q03', text: 'What do you think helped these TTOs gain the characteristics you are describing as ideal?', type: 'narrative', keywords: ['helped', 'gain', 'education', 'training', 'personality', 'supportive', 'work environment'] },
+  { id: 'Q04', text: 'I will show you a list of competencies we surveyed from current TTOs. Do you agree that the competencies listed are necessary for the role?', type: 'competency', keywords: ['list of competencies', 'surveyed', 'agree', 'necessary', 'walk you through', 'competencies listed'] },
+  { id: 'Q05', text: 'For those you deem required or necessary for the role of TTO, how would you define these competencies?', type: 'competency', keywords: ['define', 'required', 'necessary', 'how would you define'] },
+  { id: 'Q06', text: 'I will show you a list of competencies we are proposing that current TTOs were not able to identify. Do you agree?', type: 'competency', keywords: ['proposing', 'not able to identify', 'proposed competencies'] },
+  { id: 'Q07', text: 'For those you deem required, how would you define these proposed competencies?', type: 'competency', keywords: ['define', 'proposed', 'required'] },
+  { id: 'Q08', text: 'How would demonstrating or not demonstrating these competencies impact the performance of TTOs?', type: 'example', keywords: ['demonstrating', 'not demonstrating', 'impact', 'performance'] },
+  { id: 'Q09', text: 'Please share an example when these competencies were successfully demonstrated in the workplace by a Filipino TTO.', type: 'example', keywords: ['example', 'successfully demonstrated', 'workplace', 'filipino tto'] },
+  { id: 'Q10', text: 'Are there other competencies you think are necessary but not covered in the list I presented?', type: 'reflection', keywords: ['other competencies', 'not covered', 'necessary', 'additional'] },
+  { id: 'Q11', text: 'What skill gaps do you currently observe in Filipino TTOs across these competencies?', type: 'reflection', keywords: ['skill gaps', 'observe', 'addressed', 'gaps'] },
+  { id: 'Q12', text: 'What challenges do Filipino TTOs currently face that may affect competency development or execution?', type: 'reflection', keywords: ['challenges', 'face', 'affect', 'competency development'] },
+  { id: 'Q13', text: 'What do you think are ways we can multiply the number of ideal Filipino TTOs in the country?', type: 'reflection', keywords: ['multiply', 'ideal', 'ways', 'country'] },
+  { id: 'Q14', text: 'Is there anything else you wish to add in this interview?', type: 'reflection', keywords: ['anything else', 'add', 'wish'] }
+];
+
+const COMPETENCIES = [
+  { code: 'D1-C1', name: 'Technology Disclosure Evaluation', domain: 1, keywords: ['technology disclosure', 'disclosure evaluation', 'invention disclosure'] },
+  { code: 'D1-C2', name: 'IP Protection Strategy', domain: 1, keywords: ['ip protection', 'intellectual property', 'patent', 'ip strategy', 'ip filing'] },
+  { code: 'D1-C3', name: 'Technology Readiness and Valuation', domain: 1, keywords: ['technology readiness', 'trl', 'valuation', 'tech readiness'] },
+  { code: 'D2-C1', name: 'Market and Adopter Analysis', domain: 2, keywords: ['market analysis', 'adopter', 'market research', 'market'] },
+  { code: 'D2-C2', name: 'Commercialization Strategy and Pathway Selection', domain: 2, keywords: ['commercialization', 'pathway', 'licensing', 'commercialize'] },
+  { code: 'D2-C3', name: 'Spin-Off and Startup Support', domain: 2, keywords: ['spin-off', 'startup', 'spin off', 'tbi', 'incubation'] },
+  { code: 'D3-C1', name: 'Agreement Design and Drafting', domain: 3, keywords: ['agreement', 'drafting', 'contract', 'moa', 'mou'] },
+  { code: 'D3-C2', name: 'Negotiation', domain: 3, keywords: ['negotiation', 'negotiate', 'negotiating'] },
+  { code: 'D3-C3', name: 'Regulatory Compliance, Procurement Navigation, and Due Diligence', domain: 3, keywords: ['regulatory', 'compliance', 'procurement', 'due diligence', 'fob', 'coa'] },
+  { code: 'D4-C1', name: 'Researcher Engagement, Coaching, and Internal Advocacy', domain: 4, keywords: ['researcher engagement', 'coaching', 'internal advocacy', 'mentoring researchers'] },
+  { code: 'D4-C2', name: 'Proactive Opportunity Discovery and Innovation Translation', domain: 4, keywords: ['opportunity discovery', 'innovation translation', 'proactive', 'scouting'] },
+  { code: 'D4-C3', name: 'Industry and External Partner Engagement', domain: 4, keywords: ['industry', 'external partner', 'industry engagement', 'industry partner'] },
+  { code: 'D4-C4', name: 'Cross-Institutional and Ecosystem Coordination', domain: 4, keywords: ['cross-institutional', 'ecosystem', 'coordination', 'network'] },
+  { code: 'D5-C1', name: 'TT Process Management', domain: 5, keywords: ['process management', 'workflow', 'tt process', 'operations'] },
+  { code: 'D5-C2', name: 'Portfolio Prioritization Under Constraints', domain: 5, keywords: ['portfolio', 'prioritization', 'constraints', 'priority'] },
+  { code: 'D5-C3', name: 'Financial Management and Resource Mobilization', domain: 5, keywords: ['financial', 'resource mobilization', 'budget', 'funding'] },
+  { code: 'D6-C1', name: 'Institutional Policy Development and Navigation', domain: 6, keywords: ['institutional policy', 'policy development', 'policy navigation', 'policy'] },
+  { code: 'D6-C2', name: 'Strategic Planning, Institutional Sense-Making, and Vision for TT', domain: 6, keywords: ['strategic planning', 'vision', 'sense-making', 'strategy'] },
+  { code: 'D6-C3', name: 'People Development and Knowledge Management', domain: 6, keywords: ['people development', 'knowledge management', 'training', 'capacity building'] }
+];
+
+const TAB_TAXONOMY = [
+  { num: 1, name: 'IP & Tech Assessment', domains: [1] },
+  { num: 2, name: 'Commercialization', domains: [2] },
+  { num: 3, name: 'Deals & Negotiation', domains: [3] },
+  { num: 4, name: 'Stakeholder Engagement', domains: [4] },
+  { num: 5, name: 'Operations & Portfolio', domains: [5] },
+  { num: 6, name: 'Strategic Leadership', domains: [6] },
+  { num: 7, name: 'Ideal TTO Profile', domains: [] },
+  { num: 8, name: 'Systemic Challenges', domains: [] },
+  { num: 9, name: 'Emergent', domains: [] }
+];
+
+const DOMAIN_TO_TAB = { 1: 'IP & Tech Assessment', 2: 'Commercialization', 3: 'Deals & Negotiation', 4: 'Stakeholder Engagement', 5: 'Operations & Portfolio', 6: 'Strategic Leadership' };
+
+// --- Segmenter State ---
+let segState = {
+  rawText: '',
+  fileName: '',
+  fileSize: 0,
+  lastOutput: null
+};
+
+// --- File Handling ---
+function initSegmenterDragDrop() {
+  const zone = document.getElementById('segDropZone');
+  const input = document.getElementById('segFileInput');
+  if (!zone || !input) return;
+
+  ['dragenter', 'dragover'].forEach(ev => {
+    zone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('drag-over'); });
+  });
+  ['dragleave', 'drop'].forEach(ev => {
+    zone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('drag-over'); });
+  });
+  zone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file) handleSegFile(file);
+  });
+  input.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleSegFile(file);
+  });
+}
+
+async function handleSegFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['docx', 'md', 'txt', 'text'].includes(ext)) {
+    showToast('❌ Unsupported file type. Use .docx, .md, or .txt');
+    return;
+  }
+
+  segState.fileName = file.name;
+  segState.fileSize = file.size;
+
+  try {
+    if (ext === 'docx') {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      segState.rawText = result.value;
+    } else {
+      segState.rawText = await file.text();
+    }
+    displaySegFileLoaded();
+    displaySegPreview();
+    document.getElementById('btnSegment').disabled = false;
+    showToast(`📄 ${file.name} loaded — ${segState.rawText.split('\n').length} lines`);
+  } catch (err) {
+    showToast(`❌ Error reading file: ${err.message}`);
+  }
+}
+
+function displaySegFileLoaded() {
+  document.getElementById('segFileLoaded').style.display = 'block';
+  document.getElementById('segFileName').textContent = segState.fileName;
+  const kb = (segState.fileSize / 1024).toFixed(1);
+  document.getElementById('segFileSize').textContent = `${kb} KB`;
+}
+
+function displaySegPreview() {
+  const section = document.getElementById('segPreviewSection');
+  section.classList.remove('hidden');
+  document.getElementById('segPreviewText').textContent = segState.rawText;
+  const lines = segState.rawText.split('\n').length;
+  document.getElementById('segPreviewLineCount').textContent = `(${lines} lines)`;
+}
+
+function toggleSegPreview() {
+  const body = document.getElementById('segPreviewBody');
+  const toggle = document.getElementById('segPreviewToggle');
+  body.classList.toggle('expanded');
+  toggle.textContent = body.classList.contains('expanded') ? '▲' : '▼';
+}
+
+function clearSegFile() {
+  segState.rawText = '';
+  segState.fileName = '';
+  segState.fileSize = 0;
+  document.getElementById('segFileLoaded').style.display = 'none';
+  document.getElementById('segPreviewSection').classList.add('hidden');
+  document.getElementById('segFileInput').value = '';
+  document.getElementById('btnSegment').disabled = true;
+  document.getElementById('segOutputSection').classList.add('hidden');
+  document.getElementById('segStatsArea').style.display = 'none';
+  document.getElementById('segTabDistArea').style.display = 'none';
+  document.getElementById('segStatus').innerHTML = '';
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  return (bytes / 1024).toFixed(1) + ' KB';
+}
+
+// --- Transcript Parser ---
+function parseTranscript(rawText) {
+  const lines = rawText.split('\n');
+  const blocks = [];
+  let currentSpeaker = null;
+  let currentText = [];
+  let currentPage = '1';
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Detect page markers
+    const pageMatch = trimmed.match(/(?:---\s*Page\s*(\d+)\s*---|^\[?Page\s*(\d+)\]?$|^p\.?\s*(\d+)$)/i);
+    if (pageMatch) {
+      currentPage = pageMatch[1] || pageMatch[2] || pageMatch[3];
+      continue;
+    }
+
+    // Detect speaker markers
+    const speakerMatch = trimmed.match(/^(I|R|Interviewer|Respondent)\s*[:：]\s*(.*)/i);
+    if (speakerMatch) {
+      // Save previous block
+      if (currentSpeaker && currentText.length > 0) {
+        blocks.push({ speaker: currentSpeaker, text: currentText.join(' ').trim(), page: currentPage });
+      }
+      const sp = speakerMatch[1].toLowerCase();
+      currentSpeaker = (sp === 'i' || sp === 'interviewer') ? 'I' : 'R';
+      currentText = speakerMatch[2] ? [speakerMatch[2].trim()] : [];
+    } else if (currentSpeaker) {
+      // Continuation of current speaker
+      currentText.push(trimmed);
+    }
+  }
+  // Push last block
+  if (currentSpeaker && currentText.length > 0) {
+    blocks.push({ speaker: currentSpeaker, text: currentText.join(' ').trim(), page: currentPage });
+  }
+
+  // Pair into Q&A
+  const pairs = [];
+  let lastQuestion = null;
+  for (const block of blocks) {
+    if (block.speaker === 'I') {
+      lastQuestion = block;
+    } else if (block.speaker === 'R') {
+      pairs.push({
+        question: lastQuestion ? lastQuestion.text : '',
+        answer: block.text,
+        page: block.page,
+        questionPage: lastQuestion ? lastQuestion.page : block.page
+      });
+    }
+  }
+  return pairs;
+}
+
+// --- Question Mapper ---
+function mapToCanonicalQuestion(interviewerText) {
+  if (!interviewerText) return { id: 'QX', text: interviewerText || 'Unknown', type: 'narrative' };
+  const lower = interviewerText.toLowerCase();
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const q of CANONICAL_QUESTIONS) {
+    let score = 0;
+    for (const kw of q.keywords) {
+      if (lower.includes(kw)) score += kw.length;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = q;
+    }
+  }
+
+  if (bestMatch && bestScore >= 6) {
+    return { id: bestMatch.id, text: bestMatch.text, type: bestMatch.type };
+  }
+  return { id: 'QX', text: interviewerText, type: 'narrative' };
+}
+
+// --- Competency Detector ---
+function detectCompetency(text) {
+  const lower = text.toLowerCase();
+
+  // Check for explicit codes like D1-C1, D1C1
+  const codeMatch = lower.match(/d(\d)-?c(\d)/);
+  if (codeMatch) {
+    const code = `D${codeMatch[1]}-C${codeMatch[2]}`;
+    const comp = COMPETENCIES.find(c => c.code === code);
+    if (comp) return comp;
+  }
+
+  // Check for competency name keywords
+  for (const comp of COMPETENCIES) {
+    for (const kw of comp.keywords) {
+      if (lower.includes(kw)) return comp;
+    }
+  }
+  return null;
+}
+
+// --- Segment Splitter ---
+function segmentAnswer(answerText, questionId) {
+  if (!answerText || answerText.trim().length === 0) return [answerText];
+
+  // Don't split very short answers
+  const wordCount = answerText.split(/\s+/).length;
+  if (wordCount <= 40) return [answerText];
+
+  // Split by sentence boundaries
+  const sentences = answerText.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [answerText];
+  if (sentences.length <= 2) return [answerText];
+
+  const segments = [];
+  let currentSegment = [];
+  let currentWordCount = 0;
+
+  const TOPIC_SHIFT_MARKERS = [
+    'also', 'another thing', 'on the other hand', 'but then', 'separately',
+    'in addition', 'moreover', 'aside from', 'bukod doon', 'tsaka',
+    'and then there\'s', 'what i also'
+  ];
+  const EXAMPLE_MARKERS = [
+    'for example', 'for instance', 'like when', 'there was this',
+    'one time', 'i remember', 'may isang', 'halimbawa', 'kagaya ng',
+    'like in our', 'we had a case', 'we had this', 'actually', 'in fact'
+  ];
+  const COMPARISON_MARKERS = [
+    'compared to', 'unlike', 'whereas', 'on the contrary',
+    'before it was', 'kumpara sa', 'dati', 'ngayon', 'versus',
+    'in contrast', 'the difference'
+  ];
+
+  for (let i = 0; i < sentences.length; i++) {
+    const sentence = sentences[i].trim();
+    if (!sentence) continue;
+    const sLower = sentence.toLowerCase();
+    const sWordCount = sentence.split(/\s+/).length;
+
+    let shouldSplit = false;
+
+    // Check topic shift markers
+    if (currentSegment.length >= 2) {
+      for (const marker of TOPIC_SHIFT_MARKERS) {
+        if (sLower.startsWith(marker) || sLower.includes('. ' + marker)) {
+          shouldSplit = true;
+          break;
+        }
+      }
+    }
+
+    // Check example markers (own segment)
+    for (const marker of EXAMPLE_MARKERS) {
+      if (sLower.includes(marker) && currentSegment.length >= 1) {
+        shouldSplit = true;
+        break;
+      }
+    }
+
+    // Check comparison markers
+    for (const marker of COMPARISON_MARKERS) {
+      if (sLower.includes(marker) && currentSegment.length >= 1) {
+        shouldSplit = true;
+        break;
+      }
+    }
+
+    // Check for competency shift in competency questions
+    if ((questionId.startsWith('Q04') || questionId.startsWith('Q05') || questionId.startsWith('Q06') || questionId.startsWith('Q07')) && currentSegment.length >= 1) {
+      const prevComp = detectCompetency(currentSegment.join(' '));
+      const currComp = detectCompetency(sentence);
+      if (prevComp && currComp && prevComp.code !== currComp.code) {
+        shouldSplit = true;
+      }
+    }
+
+    // Word count threshold
+    if (currentWordCount + sWordCount > 150 && currentSegment.length >= 2) {
+      shouldSplit = true;
+    }
+
+    if (shouldSplit && currentSegment.length > 0) {
+      segments.push(currentSegment.join(' '));
+      currentSegment = [];
+      currentWordCount = 0;
+    }
+
+    currentSegment.push(sentence);
+    currentWordCount += sWordCount;
+  }
+
+  // Push remaining
+  if (currentSegment.length > 0) {
+    segments.push(currentSegment.join(' '));
+  }
+
+  return segments;
+}
+
+// --- Tab Classifier ---
+function classifyTab(questionId, competencyRef) {
+  // If competency reference exists, use domain mapping
+  if (competencyRef) {
+    const comp = COMPETENCIES.find(c => c.code === competencyRef);
+    if (comp) return DOMAIN_TO_TAB[comp.domain] || 'Emergent';
+  }
+
+  const qBase = questionId.split('-')[0];
+
+  // Check for competency code in question_id (e.g., Q04-D1C1)
+  if (questionId.includes('-D')) {
+    const domMatch = questionId.match(/D(\d)/);
+    if (domMatch) return DOMAIN_TO_TAB[parseInt(domMatch[1])] || 'Emergent';
+  }
+
+  switch (qBase) {
+    case 'Q00': return 'Ideal TTO Profile';
+    case 'Q01': return 'Ideal TTO Profile';
+    case 'Q02': return 'Ideal TTO Profile';
+    case 'Q03': return 'Ideal TTO Profile';
+    case 'Q04': case 'Q05': case 'Q06': case 'Q07':
+      return competencyRef ? (DOMAIN_TO_TAB[COMPETENCIES.find(c => c.code === competencyRef)?.domain] || 'Emergent') : 'Ideal TTO Profile';
+    case 'Q08': case 'Q09':
+      return competencyRef ? (DOMAIN_TO_TAB[COMPETENCIES.find(c => c.code === competencyRef)?.domain] || 'Emergent') : 'Ideal TTO Profile';
+    case 'Q10': return 'Emergent';
+    case 'Q11': return 'Systemic Challenges';
+    case 'Q12': return 'Systemic Challenges';
+    case 'Q13': return 'Systemic Challenges';
+    case 'Q14': return 'Emergent';
+    default: return 'Emergent';
+  }
+}
+
+// --- Build Full Output ---
+function buildSegmentOutput() {
+  const respondentId = document.getElementById('segRespondentId').value.trim() || 'R00';
+  const institution = document.getElementById('segInstitution').value.trim() || 'Unknown';
+  const interviewer = document.getElementById('segInterviewer').value.trim() || 'Unknown';
+  const interviewDate = document.getElementById('segDate').value || new Date().toISOString().split('T')[0];
+  const totalPages = parseInt(document.getElementById('segPages').value) || 0;
+
+  const pairs = parseTranscript(segState.rawText);
+  const allSegments = [];
+  const questionsCovered = new Set();
+  let segmentCounter = {};
+
+  // First pass: create all segments
+  const rawSegments = [];
+  for (const pair of pairs) {
+    const mapped = mapToCanonicalQuestion(pair.question);
+    let qId = mapped.id;
+
+    // For competency questions, detect specific competency
+    if (['Q04', 'Q05', 'Q06', 'Q07'].includes(qId)) {
+      const comp = detectCompetency(pair.question + ' ' + pair.answer);
+      if (comp) {
+        qId = qId + '-' + comp.code.replace('-', '');
+      }
+    }
+
+    const pieces = segmentAnswer(pair.answer, qId);
+    for (const piece of pieces) {
+      const comp = detectCompetency(piece);
+      rawSegments.push({
+        questionId: qId,
+        questionContext: mapped.text,
+        questionType: mapped.type,
+        extract: piece.trim(),
+        page: pair.page,
+        competencyRef: comp ? comp.code : null
+      });
+    }
+  }
+
+  // Second pass: number segments and build output
+  const qSegCounts = {};
+  for (const rs of rawSegments) {
+    const qKey = rs.questionId;
+    if (!qSegCounts[qKey]) qSegCounts[qKey] = [];
+    qSegCounts[qKey].push(rs);
+  }
+
+  for (const qKey of Object.keys(qSegCounts)) {
+    const segs = qSegCounts[qKey];
+    const total = segs.length;
+    for (let i = 0; i < segs.length; i++) {
+      const seg = segs[i];
+      const segId = `${respondentId}-${qKey}-S${String(i + 1).padStart(2, '0')}`;
+      const tab = classifyTab(seg.questionId, seg.competencyRef);
+      questionsCovered.add(qKey.split('-')[0]);
+
+      allSegments.push({
+        segment_id: segId,
+        tab: tab,
+        secondary_tab: null,
+        extract: seg.extract,
+        source: respondentId,
+        institution: institution,
+        page_ref: seg.page,
+        question_id: seg.questionId,
+        question_context: seg.questionContext,
+        question_type: seg.questionType,
+        competency_ref: seg.competencyRef,
+        word_count: seg.extract.split(/\s+/).length,
+        segment_index: i + 1,
+        total_segments_in_answer: total
+      });
+    }
+  }
+
+  // Tab distribution
+  const tabDist = {};
+  for (const tab of TAB_TAXONOMY) tabDist[tab.name] = 0;
+  for (const seg of allSegments) {
+    tabDist[seg.tab] = (tabDist[seg.tab] || 0) + 1;
+  }
+
+  // Questions missing
+  const allQIds = CANONICAL_QUESTIONS.map(q => q.id.split('-')[0]);
+  const covered = Array.from(questionsCovered);
+  const missing = allQIds.filter(q => !covered.includes(q));
+
+  const emergentCount = tabDist['Emergent'] || 0;
+  const emergentFlag = allSegments.length > 0 && (emergentCount / allSegments.length) > 0.15;
+
+  const output = {
+    phase: 'n8n_PHASE0',
+    metadata: {
+      respondent_id: respondentId,
+      institution: institution,
+      interviewer: interviewer,
+      interview_date: interviewDate,
+      total_pages: totalPages,
+      total_segments: allSegments.length,
+      questions_covered: covered.sort(),
+      questions_missing: missing,
+      emergent_flag: emergentFlag,
+      tab_distribution: tabDist
+    },
+    segments: allSegments
+  };
+
+  return output;
+}
+
+// --- Quality Checks ---
+function runQualityChecks(output) {
+  const issues = [];
+
+  // Check completeness
+  if (output.segments.length === 0) {
+    issues.push('No segments produced. Check if the transcript uses I:/R: speaker markers.');
+  }
+
+  // Check segment ID uniqueness
+  const ids = output.segments.map(s => s.segment_id);
+  const uniqueIds = new Set(ids);
+  if (ids.length !== uniqueIds.size) {
+    issues.push(`Duplicate segment IDs found (${ids.length - uniqueIds.size} duplicates).`);
+  }
+
+  // Check tab distribution
+  const totalSegs = output.segments.length;
+  if (totalSegs > 0) {
+    for (const [tab, count] of Object.entries(output.metadata.tab_distribution)) {
+      if (count / totalSegs > 0.5) {
+        issues.push(`Tab "${tab}" has ${Math.round(count/totalSegs*100)}% of segments — verify this is not a classification error.`);
+      }
+    }
+  }
+
+  // Check emergent flag
+  if (output.metadata.emergent_flag) {
+    issues.push('Emergent tab exceeds 15% — review emergent segments for potential new categories.');
+  }
+
+  // Check missing questions
+  if (output.metadata.questions_missing.length > 0) {
+    issues.push(`Questions not found in transcript: ${output.metadata.questions_missing.join(', ')}`);
+  }
+
+  return issues;
+}
+
+// --- Preview Table Renderer ---
+function renderSegPreviewTable(output) {
+  // Build Participant × Question table
+  const segments = output.segments;
+
+  // Get unique question IDs (preserve order)
+  const qOrder = [];
+  const qMap = {};
+  for (const seg of segments) {
+    if (!qMap[seg.question_id]) {
+      qMap[seg.question_id] = { context: seg.question_context, extracts: [] };
+      qOrder.push(seg.question_id);
+    }
+    qMap[seg.question_id].extracts.push(seg);
+  }
+
+  const participant = `${output.metadata.respondent_id} — ${output.metadata.institution}`;
+
+  let html = '<table class="seg-table"><thead><tr>';
+  html += '<th>Participant</th>';
+  for (const qId of qOrder) {
+    const shortCtx = qMap[qId].context.length > 50 ? qMap[qId].context.substring(0, 50) + '…' : qMap[qId].context;
+    html += `<th title="${escapeHtml(qMap[qId].context)}">${qId}<br><span style="font-weight:400;font-size:10px;color:var(--text-faint);">${escapeHtml(shortCtx)}</span></th>`;
+  }
+  html += '</tr></thead><tbody><tr>';
+  html += `<td style="font-weight:600;white-space:nowrap;">${escapeHtml(participant)}</td>`;
+
+  for (const qId of qOrder) {
+    const extracts = qMap[qId].extracts;
+    const cellParts = extracts.map(seg => {
+      return `<div class="seg-cell-extract">${escapeHtml(seg.extract)}</div><div class="seg-cell-wc">${seg.word_count} words · ${seg.tab}</div>`;
+    });
+    html += `<td>${cellParts.join('<span class="seg-cell-divider"></span>')}</td>`;
+  }
+
+  html += '</tr></tbody></table>';
+
+  document.getElementById('segTableWrap').innerHTML = html;
+  document.getElementById('segOutputSection').classList.remove('hidden');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// --- Stats Renderer ---
+function renderSegStats(output) {
+  const statsRow = document.getElementById('segStatsRow');
+  const totalSegs = output.metadata.total_segments;
+  const qCovered = output.metadata.questions_covered.length;
+  const qMissing = output.metadata.questions_missing.length;
+  const totalWords = output.segments.reduce((sum, s) => sum + s.word_count, 0);
+
+  statsRow.innerHTML = `
+    <div class="seg-stat-chip">📊 Segments: <span class="seg-stat-chip__value">${totalSegs}</span></div>
+    <div class="seg-stat-chip">📝 Words: <span class="seg-stat-chip__value">${totalWords.toLocaleString()}</span></div>
+    <div class="seg-stat-chip">✅ Questions Covered: <span class="seg-stat-chip__value">${qCovered}</span></div>
+    ${qMissing > 0 ? `<div class="seg-stat-chip" style="border-color:rgba(245,158,11,0.3);">⚠️ Missing: <span class="seg-stat-chip__value" style="color:var(--warning);">${qMissing}</span></div>` : ''}
+    ${output.metadata.emergent_flag ? '<div class="seg-stat-chip" style="border-color:rgba(239,68,68,0.3);">🚩 Emergent Flag: <span class="seg-stat-chip__value" style="color:#F87171;">TRUE</span></div>' : ''}
+  `;
+  document.getElementById('segStatsArea').style.display = 'block';
+
+  // Tab distribution
+  const tabDist = document.getElementById('segTabDist');
+  const maxCount = Math.max(...Object.values(output.metadata.tab_distribution), 1);
+  tabDist.innerHTML = Object.entries(output.metadata.tab_distribution)
+    .filter(([_, count]) => count > 0)
+    .map(([name, count]) => `
+      <div class="seg-tab-card">
+        <div>
+          <div class="seg-tab-card__name">${name}</div>
+          <div class="seg-tab-card__bar"><div class="seg-tab-card__bar-fill" style="width:${Math.round(count/maxCount*100)}%"></div></div>
+        </div>
+        <div class="seg-tab-card__count">${count}</div>
+      </div>
+    `).join('');
+  document.getElementById('segTabDistArea').style.display = 'block';
+}
+
+// --- Webhook Sender ---
+async function sendSegmentsToWebhook(output) {
+  try {
+    const res = await fetch(BACKEND_CONFIG.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(output)
+    });
+    if (res.ok) {
+      return { success: true, message: 'Segments sent to n8n pipeline successfully!' };
+    } else {
+      return { success: false, message: `n8n responded with HTTP ${res.status}` };
+    }
+  } catch (e) {
+    return { success: false, message: `Failed to reach n8n: ${e.message}` };
+  }
+}
+
+// --- Copy & Download ---
+function copySegTableTSV() {
+  if (!segState.lastOutput) return;
+  const output = segState.lastOutput;
+  const segments = output.segments;
+  const qIds = [...new Set(segments.map(s => s.question_id))];
+  const participant = `${output.metadata.respondent_id} — ${output.metadata.institution}`;
+
+  let tsv = 'Participant\t' + qIds.join('\t') + '\n';
+  let row = participant;
+  for (const qId of qIds) {
+    const extracts = segments.filter(s => s.question_id === qId).map(s => s.extract).join(' | ');
+    row += '\t' + extracts;
+  }
+  tsv += row;
+
+  navigator.clipboard.writeText(tsv).then(() => showToast('📋 Copied as TSV!')).catch(() => showToast('❌ Copy failed'));
+}
+
+function downloadSegJSON() {
+  if (!segState.lastOutput) return;
+  const blob = new Blob([JSON.stringify(segState.lastOutput, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const rId = segState.lastOutput.metadata.respondent_id;
+  const inst = segState.lastOutput.metadata.institution;
+  a.download = `${rId}_${inst}_segments.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 JSON downloaded!');
+}
+
+// --- Main Orchestrator ---
+async function runSegmentation() {
+  if (!segState.rawText) { showToast('No transcript loaded'); return; }
+
+  const btn = document.getElementById('btnSegment');
+  const spinner = document.getElementById('segSpinner');
+  const label = document.getElementById('btnSegmentLabel');
+  const status = document.getElementById('segStatus');
+
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  label.textContent = 'Segmenting...';
+  status.innerHTML = '';
+  status.className = 'seg-status';
+
+  // Small delay for UI update
+  await new Promise(r => setTimeout(r, 100));
+
+  try {
+    // 1. Build segments
+    const output = buildSegmentOutput();
+    segState.lastOutput = output;
+
+    // 2. Run quality checks
+    const issues = runQualityChecks(output);
+
+    // 3. Render preview
+    renderSegStats(output);
+    renderSegPreviewTable(output);
+
+    // 4. Send to webhook
+    label.textContent = 'Sending to n8n...';
+    const webhookResult = await sendSegmentsToWebhook(output);
+
+    // 5. Show results
+    if (webhookResult.success) {
+      status.className = 'seg-status seg-status--success';
+      status.innerHTML = `✅ ${webhookResult.message} (${output.metadata.total_segments} segments)`;
+      showToast(`🚀 ${output.metadata.total_segments} segments sent to n8n!`);
+    } else {
+      status.className = 'seg-status seg-status--error';
+      status.innerHTML = `⚠️ Segments created locally but webhook failed: ${webhookResult.message}`;
+      showToast(`⚠️ Webhook issue: ${webhookResult.message}`);
+    }
+
+    // Show quality issues if any
+    if (issues.length > 0) {
+      status.innerHTML += '<br><span style="font-size:11px;color:var(--warning);margin-top:4px;display:inline-block;">QC: ' + issues.join(' · ') + '</span>';
+    }
+
+  } catch (err) {
+    status.className = 'seg-status seg-status--error';
+    status.innerHTML = `❌ Segmentation error: ${err.message}`;
+    showToast(`❌ Error: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    label.textContent = '⚡ Segment & Send to Pipeline';
+  }
+}
+
 // ===================== INIT =====================
 renderCodingChips();
 renderCitation();
 loadPhaseState();
 loadAppState();
 updatePhaseBadge();
+initSegmenterDragDrop();
 switchAppTab('context');
 
 // Add listener to save prompt edits dynamically
